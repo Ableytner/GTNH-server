@@ -34,6 +34,9 @@ jobs:
 
   push:
     needs: [build, test]
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/define-push-tagged-image.yml
     with:
       gtnh-version: ${{ inputs.gtnh-version }}

@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 3 * * *' # 3:00am UTC every day
-
-env:
-  GTNH_VERSION: 0.0.10
     
 jobs:
   check:
@@ -27,6 +24,9 @@ jobs:
 
   build:
     needs: [check]
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/define-build-and-test.yml
     with:
       gtnh-version: ${{ needs.check.outputs.gtnh_version }}
