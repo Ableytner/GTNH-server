@@ -1,0 +1,41 @@
+name: Build image, run tests and push to ghcr
+
+on: 
+  workflow_call:
+    inputs:
+      gtnh-version:
+        type: string
+        required: true
+      nightly-version:
+        type: number
+        required: false
+        default: -1
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    uses: ./.github/workflows/define-build-image.yml
+    with:
+      upload: true
+      gtnh-version: ${{ inputs.gtnh-version }}
+      nightly-version: ${{ inputs.nightly-version }}
+    secrets: inherit
+
+  test:
+    needs: [build]
+    uses: ./.github/workflows/define-test-image.yml
+    with:
+      gtnh-version: ${{ inputs.gtnh-version }}
+      nightly-version: ${{ inputs.nightly-version }}
+    secrets: inherit
+
+  push:
+    needs: [build, test]
+    uses: ./.github/workflows/define-push-tagged-image.yml
+    with:
+      gtnh-version: ${{ inputs.gtnh-version }}
+      nightly-version: ${{ inputs.nightly-version }}
+    secrets: inherit

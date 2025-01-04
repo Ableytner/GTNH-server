@@ -2,6 +2,9 @@
 *
 
 # But not these files...
+!.github
+!.github/workflows
+!.github/workflows/*
 !scripts
 !.gitignore
 !docker-compose.yml

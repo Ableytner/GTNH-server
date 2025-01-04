@@ -1,0 +1,43 @@
+name: Build image
+
+on:
+  workflow_call:
+    inputs:
+      upload:
+        type: boolean
+        required: false
+        default: false
+      gtnh-version:
+        type: string
+        required: true
+      nightly-version:
+        type: number
+        required: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux]
+    steps:
+    - uses: actions/checkout@v3
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: Build
+      run: |
+        docker build --build-arg GTNH_NIGHTLY_BUILD=${{ inputs.nightly-version }} -t ${{ env.IMAGE_NAME }}:latest --secret id=github_token,env=GITHUB_TOKEN .
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Export
+      if: ${{ inputs.upload == true }}
+      run: |
+        docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
+    - name: Upload image artifact
+      if: ${{ inputs.upload == true }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: image
+        path: /tmp/image.tar

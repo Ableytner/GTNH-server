@@ -18,6 +18,8 @@ RUN --mount=type=secret,id=github_token \
   && rm server.zip \
   && mv "$(ls *.zip)" server.zip
 
+# read gtnh version from zip file
+
 # set default environment variables for GTNH
 ENV GTNH_NIGHTLY_BUILD=${GTNH_NIGHTLY_BUILD} \
   TYPE=custom \
