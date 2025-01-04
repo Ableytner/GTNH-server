@@ -9,8 +9,8 @@ jobs:
   check:
     runs-on: [self-hosted, linux]
     outputs:
-      gtnh_version: ${{ steps.fetch-version.outputs.text }}
-      nightly_version: ${{ steps.fetch-nightly.outputs.number }}
+      gtnh_version: ${{ steps.fetch-version.outputs.test }}
+      nightly_version: ${{ steps.fetch-nightly.outputs.test }}
     steps:
     - id: fetch-version
       name: get latest gtnh version (TODO; actually return version read from github tags page)
