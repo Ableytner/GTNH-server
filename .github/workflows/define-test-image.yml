@@ -71,7 +71,7 @@ jobs:
           fi
       - name: Read MOTD
         run: |
-          mcstatus 127.0.0.1 status \
+          pipx run mcstatus==11.1.1 127.0.0.1 status \
           | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
           | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
       - name: Check MOTD GTNH version
