@@ -7,9 +7,9 @@ on:
         type: string
         required: true
       nightly-version:
-        type: number
+        type: string
         required: false
-        default: -1
+        default: "-1"
 
 defaults:
   run:
