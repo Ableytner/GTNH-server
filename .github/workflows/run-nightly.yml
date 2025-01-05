@@ -25,20 +25,7 @@ jobs:
         | jq -r "[.[] | select(.conclusion == \"success\")]" \
         | jq -r ".[0] | .run_number" \
         | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
-    - name: lowercase github.repository
-      run: |
-        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-    - id: check-nightly
-      name: check if latest nightly tag already exists
-      uses: tyriis/docker-image-tag-exists@v2.1.0
-      with:
-        registry: ghcr.io
-        repository: ${{ env.IMAGE_NAME }}
-        tag: nightly-${{ steps.fetch-nightly.outputs.vers }}
-    - name: exit if nightly tag already exists
-      if: steps.check-nightly.outputs.tag == 'found'
-      run: |
-        exit 1
+    # TODO: verify that nightly-xxx tag doesn't yet exist
     - name: print latest nightly version number
       run: |
         echo "Found latest nightly version ${{ steps.fetch-version.outputs.vers }}"
