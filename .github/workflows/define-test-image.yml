@@ -26,7 +26,7 @@ jobs:
         # see https://stackoverflow.com/a/63153978/15436169 for more info
         run: |
           sudo apt-get update
-          ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) /etc/localtime
+          sudo ln -snf /usr/share/zoneinfo/$(curl https://ipapi.co/timezone) /etc/localtime
           DEBIAN_FRONTEND=noninteractive sudo apt-get -y install pipx
           pipx ensurepath
       - name: install mcstatus
