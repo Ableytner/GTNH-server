@@ -31,11 +31,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get -y install pipx
-          pipx ensurepath
       - name: install mcstatus
         run: |
           pipx install mcstatus==11.1.1
-          source ~/.bashrc
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -64,7 +62,7 @@ jobs:
         run: |
           declare -i c=300 \
           && while (( c > 0 )); do
-            mcstatus 127.0.0.1 ping && break
+            pipx run mcstatus==11.1.1 127.0.0.1 ping && break
             (( c -= 1 ))
             sleep 1
           done
