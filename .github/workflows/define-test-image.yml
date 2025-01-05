@@ -86,5 +86,6 @@ jobs:
           | grep -oP "(?<=-nightly).+$" \
           | [[ $(cat -) == ${{ inputs.nightly-version }} ]]
       - name: Stop and delete server container
+        if: always()
         run: |
           docker rm -f ${{ env.CONTAINER_ID }}
