@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
       - name: Set up pipx
         run: |
-          apt install pipx
+          sudo apt-get install pipx
           pipx ensurepath
       - name: install mcstatus
         run: |
