@@ -35,6 +35,7 @@ jobs:
       - name: install mcstatus
         run: |
           pipx install mcstatus==11.1.1
+          source ~/.bashrc
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -62,9 +63,10 @@ jobs:
       - name: Wait for server to start
         run: |
           declare -i c=300 \
-          && while (( $(c) > 0 )); do
+          && while (( c > 0 )); do
             mcstatus 127.0.0.1 ping && break
             (( c -= 1 ))
+            sleep 1
           done
           if (( c == 0 )); then
             exit 1
