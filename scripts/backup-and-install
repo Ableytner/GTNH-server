@@ -119,6 +119,8 @@ function install_func {
 function substitute_motd {
     cd /data
 
+    echo "before substitution: ${MOTD}"
+
     cat config/GTNewHorizons/dreamcraft.cfg \
     | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
     | MODPACK_VERSION=$(cat -)
@@ -127,6 +129,10 @@ function substitute_motd {
     | sed 's/MODPACK_VERSION/'"${MODPACK_VERSION}"'/' \
     | sed 's/NIGHTLY_BUILD/'"${GTNH_NIGHTLY_BUILD}"'/' \
     | export MOTD=$(cat -)
+
+    echo "after substitution: ${MOTD}"
+    echo ${MODPACK_VERSION}
+    echo ${GTNH_NIGHTLY_BUILD}
 }
 
 backup_func
