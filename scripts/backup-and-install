@@ -123,9 +123,9 @@ function substitute_motd {
     | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
     | MODPACK_VERSION=$(cat -)
 
-    echo $MOTD \
-    | sed 's/MODPACK_VERSION/'"$MODPACK_VERSION"'/' \
-    | sed 's/NIGHTLY_BUILD/'"$GTNH_NIGHTLY_BUILD"'/' \
+    echo ${MOTD} \
+    | sed 's/MODPACK_VERSION/'"${MODPACK_VERSION}"'/' \
+    | sed 's/NIGHTLY_BUILD/'"${GTNH_NIGHTLY_BUILD}"'/' \
     | export MOTD=$(cat -)
 }
 
@@ -133,7 +133,7 @@ backup_func
 install_func
 if [[ -v MOTD ]]; then
     substitute_motd
-    echo "substituted MOTD to $MOTD"
+    echo "substituted MOTD to ${MOTD}"
 fi
 
 # start the base images' entrypoint

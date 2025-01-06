@@ -84,6 +84,10 @@ jobs:
           echo ${{ env.MOTD }} \
           | grep -oP "(?<=-nightly).+$" \
           | [[ $(cat -) == ${{ inputs.nightly-version }} ]]
+      - name: Print out server container logs
+        if: failure()
+        run: |
+          docker logs ${{ env.CONTAINER_ID }}
       - name: Stop and delete server container
         if: always()
         run: |
