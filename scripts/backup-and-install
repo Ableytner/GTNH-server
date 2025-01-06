@@ -123,8 +123,10 @@ function substitute_motd {
     | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
     | MODPACK_VERSION=$(cat -)
 
-    export MOTD=${MOTD/MODPACK_VERSION/$MODPACK_VERSION}
-    export MOTD=${MOTD/NIGHTLY_BUILD/$GTNH_NIGHTLY_BUILD}
+    echo $MOTD \
+    | sed 's/MODPACK_VERSION/'"$MODPACK_VERSION"'/' \
+    | sed 's/NIGHTLY_BUILD/'"$GTNH_NIGHTLY_BUILD"'/' \
+    | export MOTD=$(cat -)
 }
 
 backup_func
