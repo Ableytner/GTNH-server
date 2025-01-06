@@ -18,7 +18,7 @@ jobs:
         | jq -r ".workflow_runs[0] | .conclusion" \
         | [[ $(cat -) != "success" ]] \
         && echo "latest nightly build didn't succeed, exiting..." \
-        && exit 1
+        && exit 1 \
         || echo "latest nightly build succeeded"
     - id: fetch-version
       name: get latest gtnh version
