@@ -7,7 +7,5 @@ It's not even close to being done, so you should use it at your own risk.
 ### TO-DO
 
 Build images for stable releases
-Verify if build with nigtly number already exists
-Implement additional_mods functionality
 Remove existing mod if modid matches with mod from additional_mods
 Create tests for backup/rollback functionality

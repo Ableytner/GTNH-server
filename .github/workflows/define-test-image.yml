@@ -53,7 +53,7 @@ jobs:
           docker load --input /tmp/image.tar
       - name: Create server container
         run: |
-          docker create --rm --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons ${MODPACK_VERSION}-nightly${GTNH_NIGHTLY_BUILD}' -e EULA=TRUE ${{ env.IMAGE_NAME }}:latest \
+          docker create --rm --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-nightlyNIGHTLY_BUILD' -e EULA=TRUE ${{ env.IMAGE_NAME }}:latest \
           | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
       - name: Start server container
         run: |
@@ -75,13 +75,11 @@ jobs:
           | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
           | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
       - name: Check MOTD GTNH version
-        if: false
         run: |
           echo ${{ env.MOTD }} \
           | grep -oP "(?<=GT New Horizons ).+(?=-)" \
           | [[ $(cat -) == ${{ inputs.gtnh-version }} ]]
       - name: Check MOTD nightly version
-        if: false
         run: |
           echo ${{ env.MOTD }} \
           | grep -oP "(?<=-nightly).+$" \

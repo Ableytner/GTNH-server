@@ -11,6 +11,6 @@ services:
 #     - ./additional_mods:/mods
     environment:
       MEMORY: 8G
-      MOTD: "GT New Horizons ${MODPACK_VERSION}-nightly${GTNH_NIGHTLY_BUILD}"
+      MOTD: "GT New Horizons MODPACK_VERSION-nightlyNIGHTLY_BUILD"
       EULA: "TRUE"
     restart: no

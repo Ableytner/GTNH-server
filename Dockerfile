@@ -1,6 +1,7 @@
 FROM itzg/minecraft-server:java21
 
-ARG GTNH_NIGHTLY_BUILD
+ARG MODPACK_VERSION \
+  GTNH_NIGHTLY_BUILD
 
 RUN apt-get update \
   && apt-get install -y jq zip unzip \
@@ -21,7 +22,8 @@ RUN --mount=type=secret,id=github_token \
 # read gtnh version from zip file
 
 # set default environment variables for GTNH
-ENV GTNH_NIGHTLY_BUILD=${GTNH_NIGHTLY_BUILD} \
+ENV MODPACK_VERSION=${MODPACK_VERSION} \
+  GTNH_NIGHTLY_BUILD=${GTNH_NIGHTLY_BUILD} \
   TYPE=custom \
   CUSTOM_SERVER="/data/lwjgl3ify-forgePatches.jar" \
   JVM_OPTS="@java9args.txt" \

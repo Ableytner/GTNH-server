@@ -12,6 +12,8 @@ fi
 echo $GTNH_NIGHTLY_BUILD > docker-backups/current.txt
 
 function backup_func {
+    cd /data
+
     mkdir -p docker-backups/new && chown minecraft:minecraft docker-backups/new
 
     if [[ -v CURRENT_GTNH_NIGHTLY_BUILD ]] && (( CURRENT_GTNH_NIGHTLY_BUILD > GTNH_NIGHTLY_BUILD )); then
@@ -69,6 +71,8 @@ function backup_func {
 }
 
 function install_func {
+    cd /data
+
     mkdir -p docker-backups/install && mkdir -p docker-backups/install/config && chown minecraft:minecraft docker-backups/install
 
     if [[ -v CURRENT_GTNH_NIGHTLY_BUILD ]] && (( CURRENT_GTNH_NIGHTLY_BUILD == GTNH_NIGHTLY_BUILD )); then
@@ -112,8 +116,23 @@ function install_func {
     rm -rf docker-backups/install
 }
 
+function substitute_motd {
+    cd /data
+
+    cat config/GTNewHorizons/dreamcraft.cfg \
+    | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
+    | MODPACK_VERSION=$(cat -)
+
+    export MOTD=${MOTD/MODPACK_VERSION/$MODPACK_VERSION}
+    export MOTD=${MOTD/NIGHTLY_BUILD/$GTNH_NIGHTLY_BUILD}
+}
+
 backup_func
 install_func
+if [[ -v MOTD ]]; then
+    substitute_motd
+    echo "substituted MOTD to $MOTD"
+fi
 
 # start the base images' entrypoint
 /start
