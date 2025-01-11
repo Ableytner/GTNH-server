@@ -2,7 +2,7 @@
 
 This repository contains docker images for hosting a dedicated server for the [GT New Horizons](https://www.gtnewhorizons.com/) Minecraft modpack.
 
-It's not even close to being done, so you should use it at your own risk.
+It should be stable, but you should use it at your own risk. (And don't forget to make backups!)
 
 ### TO-DO
 
