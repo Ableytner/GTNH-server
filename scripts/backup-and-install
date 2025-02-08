@@ -127,6 +127,7 @@ function substitute_motd {
 
     cat config/GTNewHorizons/dreamcraft.cfg \
     | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
+    | sed 's/.x-nightly/0/' \
     > "${TMPPATH}"
     export MODPACK_VERSION=$(cat "${TMPPATH}")
 
