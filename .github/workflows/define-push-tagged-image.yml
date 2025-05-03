@@ -52,3 +52,6 @@ jobs:
         docker push ghcr.io/${{ env.IMAGE_NAME }}:nightly-${{ inputs.nightly-version }}
         docker tag ghcr.io/${{ env.IMAGE_NAME }}:nightly-${{ inputs.nightly-version }} ghcr.io/${{ env.IMAGE_NAME }}:nightly
         docker push ghcr.io/${{ env.IMAGE_NAME }}:nightly
+    - name: Remove local image
+      run: |
+        docker image rm ${{ env.IMAGE_NAME }}

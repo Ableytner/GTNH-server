@@ -41,3 +41,6 @@ jobs:
       with:
         name: image
         path: /tmp/image.tar
+    - name: Remove local image
+      run: |
+        docker image rm ${{ env.IMAGE_NAME }}
