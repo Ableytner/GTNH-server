@@ -3,10 +3,6 @@ name: Build image
 on:
   workflow_call:
     inputs:
-      upload:
-        type: boolean
-        required: false
-        default: false
       gtnh-version:
         type: string
         required: true
@@ -32,15 +28,11 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Export
-      if: ${{ inputs.upload == true }}
       run: |
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
-    - name: Upload image artifact
-      if: ${{ inputs.upload == true }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: image
-        path: /tmp/image.tar
+    - name: Cache docker image
+      run: |
+        curl -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server" -F "issue_id=1" http://192.168.0.145:25000/dump
     - name: Remove local image
       run: |
         docker image rm ${{ env.IMAGE_NAME }}

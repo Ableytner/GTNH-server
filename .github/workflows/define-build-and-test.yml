@@ -19,7 +19,6 @@ jobs:
   build:
     uses: ./.github/workflows/define-build-image.yml
     with:
-      upload: true
       gtnh-version: ${{ inputs.gtnh-version }}
       nightly-version: ${{ inputs.nightly-version }}
     secrets: inherit
