@@ -18,78 +18,80 @@ jobs:
   test:
     runs-on: [self-hosted, linux]
     steps:
-      - name: Set up Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.12"
-      - name: Install tzdata
-        run: |
-          sudo ln -snf /usr/share/zoneinfo/$(curl \"https://ipapi.co/timezone\") /etc/localtime
-          sudo apt-get update
-          DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
-      - name: Set up pipx
-        # see https://stackoverflow.com/a/63153978/15436169 for more info
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install pipx
-      - name: install mcstatus
-        run: |
-          pipx install mcstatus==11.1.1
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: lowercase github.repository
-        run: |
-          echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: image
-          path: /tmp
-      - name: Load image
-        run: |
-          docker load --input /tmp/image.tar
-      - name: Create server container
-        run: |
-          docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-nightlyNIGHTLY_BUILD' -e EULA=TRUE ${{ env.IMAGE_NAME }}:latest \
-          | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
-      - name: Start server container
-        run: |
-          docker start ${{ env.CONTAINER_ID }}
-      - name: Wait for server to start
-        run: |
-          declare -i c=300 \
-          && while (( c > 0 )); do
-            pipx run mcstatus==11.1.1 127.0.0.1 ping && break
-            (( c -= 10 ))
-            sleep 10
-          done
-          if (( c <= 0 )); then
-            exit 1
-          fi
-      - name: Read MOTD
-        run: |
-          pipx run mcstatus==11.1.1 127.0.0.1 status \
-          | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
-          | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
-      - name: Check MOTD GTNH version
-        run: |
-          echo ${{ env.MOTD }} \
-          | grep -oP "(?<=GT New Horizons ).+(?=-)" \
-          | [[ $(cat -) == ${{ inputs.gtnh-version }} ]]
-      - name: Check MOTD nightly version
-        run: |
-          echo ${{ env.MOTD }} \
-          | grep -oP "(?<=-nightly).+$" \
-          | [[ $(cat -) == ${{ inputs.nightly-version }} ]]
-      - name: Print out server container logs
-        if: failure()
-        run: |
-          docker logs ${{ env.CONTAINER_ID }}
-      - name: Stop and delete server container
-        if: always()
-        run: |
-          docker rm -f ${{ env.CONTAINER_ID }}
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+    - name: Install tzdata
+      run: |
+        sudo ln -snf /usr/share/zoneinfo/$(curl \"https://ipapi.co/timezone\") /etc/localtime
+        sudo apt-get update
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
+    - name: Set up pipx
+      # see https://stackoverflow.com/a/63153978/15436169 for more info
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install pipx
+    - name: install mcstatus
+      run: |
+        pipx install mcstatus==11.1.1
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: Download cached docker image
+      run: |
+        curl -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+    - name: Load image
+      run: |
+        docker load --input /tmp/image.tar
+    - name: Create server container
+      run: |
+        docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-nightlyNIGHTLY_BUILD' -e EULA=TRUE ${{ env.IMAGE_NAME }}:latest \
+        | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
+    - name: Start server container
+      run: |
+        docker start ${{ env.CONTAINER_ID }}
+    - name: Wait for server to start
+      run: |
+        declare -i c=300 \
+        && while (( c > 0 )); do
+          pipx run mcstatus==11.1.1 127.0.0.1 ping && break
+          (( c -= 10 ))
+          sleep 10
+        done
+        if (( c <= 0 )); then
+          exit 1
+        fi
+    - name: Read MOTD
+      run: |
+        pipx run mcstatus==11.1.1 127.0.0.1 status \
+        | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
+        | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
+    - name: Check MOTD GTNH version
+      run: |
+        echo ${{ env.MOTD }} \
+        | grep -oP "(?<=GT New Horizons ).+(?=-)" \
+        | [[ $(cat -) == ${{ inputs.gtnh-version }} ]]
+    - name: Check MOTD nightly version
+      run: |
+        echo ${{ env.MOTD }} \
+        | grep -oP "(?<=-nightly).+$" \
+        | [[ $(cat -) == ${{ inputs.nightly-version }} ]]
+    - name: Print out server container logs
+      if: failure()
+      run: |
+        docker logs ${{ env.CONTAINER_ID }}
+    - name: Stop and delete server container
+      if: always()
+      run: |
+        docker rm -f ${{ env.CONTAINER_ID }}
+    - name: Remove cached docker image on failure
+      if: failure()
+      run: |
+        curl -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
