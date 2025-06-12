@@ -24,7 +24,7 @@ jobs:
         python-version: "3.12"
     - name: Install tzdata
       run: |
-        sudo ln -snf /usr/share/zoneinfo/$(curl \"https://ipapi.co/timezone\") /etc/localtime
+        sudo ln -snf /usr/share/zoneinfo/$(curl --fail-with-body \"https://ipapi.co/timezone\") /etc/localtime
         sudo apt-get update
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
     - name: Set up pipx
@@ -46,7 +46,7 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Download cached docker image
       run: |
-        curl -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
@@ -94,4 +94,4 @@ jobs:
     - name: Remove cached docker image on failure
       if: failure()
       run: |
-        curl -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
+        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar

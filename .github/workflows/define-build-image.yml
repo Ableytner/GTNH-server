@@ -32,7 +32,7 @@ jobs:
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
     - name: Cache docker image
       run: |
-        curl -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server" -F "issue_id=1" http://192.168.0.145:25000/dump
+        curl --fail-with-body -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server" -F "issue_id=1" http://192.168.0.145:25000/dump
     - name: Remove local image
       run: |
         docker image rm ${{ env.IMAGE_NAME }}

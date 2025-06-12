@@ -9,11 +9,11 @@ RUN apt-get update \
   && mkdir -p /tmp
 
 RUN --mount=type=secret,id=github_token \
-  curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/58547244/runs?per_page=100 \
+  curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/58547244/runs?per_page=100 \
   | jq -r ".workflow_runs[] | select(.run_number==${GTNH_NIGHTLY_BUILD}) | .url" \
-  | curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)/artifacts" \
+  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)/artifacts" \
   | jq -r '.artifacts[] | select(.name | endswith("server-new-java")) | .archive_download_url' \
-  | curl -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)" -o /download/server.zip \
+  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)" -o /download/server.zip \
   && cd /download \
   && unzip server.zip -d . \
   && rm server.zip \
