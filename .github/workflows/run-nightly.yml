@@ -2,8 +2,6 @@ name: Check for new nightly release
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 4 * * *' # 4:00am UTC every day
 
 jobs:
   check:

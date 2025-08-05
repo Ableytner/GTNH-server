@@ -7,17 +7,17 @@ cd /data
 mkdir -p docker-backups && chown -R minecraft:minecraft docker-backups
 
 if [[ -f docker-backups/current.txt ]]; then
-    CURRENT_GTNH_NIGHTLY_BUILD=$(<docker-backups/current.txt)
+    CURRENT_GTNH_DAILY_BUILD=$(<docker-backups/current.txt)
 fi
-echo $GTNH_NIGHTLY_BUILD > docker-backups/current.txt
+echo $GTNH_DAILY_BUILD > docker-backups/current.txt
 
 function backup_func {
     cd /data
 
     mkdir -p docker-backups/new && chown minecraft:minecraft docker-backups/new
 
-    if [[ -v CURRENT_GTNH_NIGHTLY_BUILD ]] && (( CURRENT_GTNH_NIGHTLY_BUILD > GTNH_NIGHTLY_BUILD )); then
-        BACKUP_FILE="docker-backups/${GTNH_NIGHTLY_BUILD}.zip"
+    if [[ -v CURRENT_GTNH_DAILY_BUILD ]] && (( CURRENT_GTNH_DAILY_BUILD > GTNH_DAILY_BUILD )); then
+        BACKUP_FILE="docker-backups/${GTNH_DAILY_BUILD}.zip"
 
         if [[ ! -f "${BACKUP_FILE}" ]]; then
             log "backup file ${BACKUP_FILE} wasn't found"
@@ -47,7 +47,7 @@ function backup_func {
         else
             # use default value if variable doesn't exist
             # https://www.debuntu.org/how-to-bash-parameter-expansion-and-default-values/
-            BACKUP_FILE="docker-backups/${CURRENT_GTNH_NIGHTLY_BUILD:-old}.zip"
+            BACKUP_FILE="docker-backups/${CURRENT_GTNH_DAILY_BUILD:-old}.zip"
 
             log "creating backup: ${BACKUP_FILE}"
 
@@ -75,7 +75,7 @@ function install_func {
 
     mkdir -p docker-backups/install && mkdir -p docker-backups/install/config && chown minecraft:minecraft docker-backups/install
 
-    if [[ -v CURRENT_GTNH_NIGHTLY_BUILD ]] && (( CURRENT_GTNH_NIGHTLY_BUILD == GTNH_NIGHTLY_BUILD )); then
+    if [[ -v CURRENT_GTNH_DAILY_BUILD ]] && (( CURRENT_GTNH_DAILY_BUILD == GTNH_DAILY_BUILD )); then
         log "skipping install step for already installed version"
     else
         if [[ ! -f /download/server.zip ]]; then
@@ -127,13 +127,14 @@ function substitute_motd {
 
     cat config/GTNewHorizons/dreamcraft.cfg \
     | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
-    | sed 's/.x-nightly/.0/' \
+    | cut -d "-" -f 1 \
+    | sed 's/.x/.0/' \
     > "${TMPPATH}"
     export MODPACK_VERSION=$(cat "${TMPPATH}")
 
     echo ${MOTD} \
     | sed 's/MODPACK_VERSION/'"${MODPACK_VERSION}"'/' \
-    | sed 's/NIGHTLY_BUILD/'"${GTNH_NIGHTLY_BUILD}"'/' \
+    | sed 's/DAILY_BUILD/'"${GTNH_DAILY_BUILD}"'/' \
     > "${TMPPATH}"
     export MOTD=$(cat "${TMPPATH}")
 
@@ -141,7 +142,7 @@ function substitute_motd {
 
     echo "after substitution: ${MOTD}"
     echo ${MODPACK_VERSION}
-    echo ${GTNH_NIGHTLY_BUILD}
+    echo ${GTNH_DAILY_BUILD}
 }
 
 backup_func
