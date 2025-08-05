@@ -1,6 +1,6 @@
 services:
   mc:
-    image: ghcr.io/ableytner/gtnh-server:nightly
+    image: ghcr.io/ableytner/gtnh-server:daily
     container_name: minecraft-gtnh
     tty: true
     stdin_open: true
@@ -11,6 +11,6 @@ services:
 #     - ./additional_mods:/mods
     environment:
       MEMORY: 8G
-      MOTD: "GT New Horizons MODPACK_VERSION-nightlyNIGHTLY_BUILD"
+      MOTD: "GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD"
       EULA: "TRUE"
     restart: no
