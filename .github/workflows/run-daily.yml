@@ -36,10 +36,16 @@ jobs:
         | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
       run: |
-        echo "Found modpack version ${{ steps.fetch-version.outputs.vers }}"
+        [[ ${{ steps.fetch-version.outputs.vers }} == "" ]] \
+        && echo "modpack version number is empty, exiting..." \
+        && exit 1 \
+        || echo "Found modpack version ${{ steps.fetch-version.outputs.vers }}"
     - name: print latest daily version number
       run: |
-        echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
+        [[ ${{ steps.fetch-daily.outputs.vers }} == "" ]] \
+        && echo "daily version number is empty, exiting..." \
+        && exit 1 \
+        || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
 
   build:
     needs: [check]
