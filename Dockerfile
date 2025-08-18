@@ -8,6 +8,7 @@ RUN apt-get update \
   && mkdir -p /download \
   && mkdir -p /tmp
 
+# download modpack zip
 RUN --mount=type=secret,id=github_token \
   curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=100 \
   | jq -r ".workflow_runs[] | select(.run_number==${GTNH_DAILY_BUILD}) | .url" \
@@ -17,7 +18,14 @@ RUN --mount=type=secret,id=github_token \
   && cd /download \
   && unzip server.zip -d . \
   && rm server.zip \
-  && mv "$(ls *.zip)" server.zip
+  && mv *.zip server.zip
+
+# download gtnh web map
+RUN --mount=type=secret,id=github_token \
+  curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GTNH-Web-Map/releases/latest \
+  | jq -r '.assets[] | select(.name | test("gtnh-web-map-[\\d\\.]+\\.jar")) | .browser_download_url' \
+  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)" --remote-name \
+  && mv gtnh-web-map-*.jar /download/
 
 # read gtnh version from zip file
 

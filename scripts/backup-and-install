@@ -112,6 +112,16 @@ function install_func {
         cp -rp /mods/* mods/
     fi
 
+    if [[ -v WEBMAP ]] && [[ ! -f mods/gtnh-web-map-*.jar ]]; then
+        log "installing gtnh web map"
+        mv /download/gtnh-web-map-*.jar mods/
+    fi
+
+    if [[ ! -v WEBMAP ]] && [[ -f mods/gtnh-web-map-*.jar ]]; then
+        log "removing web map jar file"
+        rm mods/gtnh-web-map-*.jar
+    fi
+
     log "cleaning up"
     rm -rf docker-backups/install
 }

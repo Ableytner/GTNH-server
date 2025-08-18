@@ -1,16 +1,18 @@
 services:
   mc:
-    image: ghcr.io/ableytner/gtnh-server:daily
     container_name: minecraft-gtnh
+    image: ghcr.io/ableytner/gtnh-server:daily
     tty: true
     stdin_open: true
     ports:
-      - "25565:25565"
+      - 25565:25565
+      - 8123:8123
     volumes:
       - ./server:/data
-#     - ./additional_mods:/mods
+      - ./additional_mods:/mods
     environment:
       MEMORY: 8G
       MOTD: "GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD"
       EULA: "TRUE"
+      WEBMAP: "TRUE"
     restart: no
