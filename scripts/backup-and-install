@@ -112,9 +112,9 @@ function install_func {
         cp -rp /mods/* mods/
     fi
 
-    if [[ -f mods/gtnh-web-map-*.jar ]]; then
+    if [[ $(find ./mods -maxdepth 1 -name 'gtnh-web-map-*.jar' -printf 1 -quit) ]]; then
         log "removing existing web map jar file"
-        rm mods/gtnh-web-map-*.jar
+        rm -f mods/gtnh-web-map-*.jar
     fi
 
     if [[ -v WEBMAP ]]; then
