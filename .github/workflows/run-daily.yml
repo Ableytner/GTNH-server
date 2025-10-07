@@ -57,7 +57,11 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Build
       run: |
-        docker build --build-arg GTNH_VERSION=${{ needs.check.outputs.gtnh_version}} GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }} -t ${{ env.IMAGE_NAME }}:latest --secret id=github_token,env=GITHUB_TOKEN .
+        docker build \
+          --build-arg GTNH_VERSION=${{ needs.check.outputs.gtnh_version }} \
+          --build-arg GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }} \
+          -t ${{ env.IMAGE_NAME }}:latest \
+          --secret id=github_token,env=GITHUB_TOKEN .
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Export
