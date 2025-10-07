@@ -1,6 +1,6 @@
 FROM itzg/minecraft-server:java21
 
-ARG MODPACK_VERSION \
+ARG GTNH_VERSION \
   GTNH_DAILY_BUILD
 
 RUN apt-get update \
@@ -28,7 +28,7 @@ RUN --mount=type=secret,id=github_token \
   && mv gtnh-web-map-*.jar /download/
 
 # set default environment variables for GTNH
-ENV MODPACK_VERSION=${MODPACK_VERSION} \
+ENV GTNH_VERSION=${GTNH_VERSION} \
   GTNH_DAILY_BUILD=${GTNH_DAILY_BUILD} \
   TYPE=custom \
   CUSTOM_SERVER="/data/lwjgl3ify-forgePatches.jar" \

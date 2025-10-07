@@ -135,15 +135,8 @@ function substitute_motd {
 
     echo "before substitution: ${MOTD}"
 
-    cat config/GTNewHorizons/dreamcraft.cfg \
-    | grep -oP "(?<=S\:ModPackVersion\=).+(?=\b)" \
-    | cut -d "-" -f 1 \
-    | sed 's/.x/.0/' \
-    > "${TMPPATH}"
-    export MODPACK_VERSION=$(cat "${TMPPATH}")
-
     echo ${MOTD} \
-    | sed 's/MODPACK_VERSION/'"${MODPACK_VERSION}"'/' \
+    | sed 's/MODPACK_VERSION/'"${GTNH_VERSION}"'/' \
     | sed 's/DAILY_BUILD/'"${GTNH_DAILY_BUILD}"'/' \
     > "${TMPPATH}"
     export MOTD=$(cat "${TMPPATH}")
@@ -151,7 +144,7 @@ function substitute_motd {
     rm -f "${TMPPATH}"
 
     echo "after substitution: ${MOTD}"
-    echo ${MODPACK_VERSION}
+    echo ${GTNH_VERSION}
     echo ${GTNH_DAILY_BUILD}
 }
 
