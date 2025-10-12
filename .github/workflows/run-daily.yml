@@ -55,15 +55,25 @@ jobs:
     - name: lowercase github.repository
       run: |
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-    - name: Build
-      run: |
-        docker build \
-          --build-arg GTNH_VERSION=${{ needs.check.outputs.gtnh_version }} \
-          --build-arg GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }} \
-          -t ${{ env.IMAGE_NAME }}:latest \
-          --secret id=github_token,env=GITHUB_TOKEN .
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Docker meta
+      uses: docker/metadata-action@v5
+      id: meta
+      with:
+        images: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+    - name: build
+      uses: docker/build-push-action@v6
+      with:
+        platforms: linux/amd64
+        pull: true
+        load: true
+        push: false
+        tags: ${{ env.IMAGE_NAME }}:latest
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GTNH_VERSION=${{ needs.check.outputs.gtnh_version }}
+          GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }}
+        secrets: |
+          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
     - name: Export
       run: |
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
