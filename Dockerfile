@@ -40,4 +40,6 @@ COPY --chmod=755 scripts/backup-and-install /backup-and-install
 RUN dos2unix /backup-and-install
 
 ENTRYPOINT [ "/backup-and-install" ]
-HEALTHCHECK --start-period=30s --retries=24 --interval=60s CMD mc-health
+HEALTHCHECK --start-period=2m --retries=2 --interval=30s CMD mc-health
+
+RUN echo "gtnh-version=${GTNH_VERSION}\ndaily=${GTNH_DAILY_BUILD}" >> /etc/image.properties

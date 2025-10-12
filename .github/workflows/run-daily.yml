@@ -2,6 +2,11 @@ name: Check for new daily release
 
 on:
   workflow_dispatch:
+    inputs:
+      daily:
+        description: the daily build to use (fetches latest if not provided)
+        type: number
+        required: false
   schedule:
     - cron: '0 4 * * *' # 4:00am UTC every day
 
@@ -13,6 +18,7 @@ jobs:
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
     steps:
     - name: check if latest daily build failed
+      if: "${{ github.event.inputs.daily == '' }}"
       run: |
         curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
         | jq -r ".workflow_runs[0] | .conclusion" \
@@ -31,7 +37,9 @@ jobs:
     - id: fetch-daily
       name: get latest daily version number
       run: |
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
+        [[ "${{ github.event.inputs.daily }}" != "" ]] \
+        && echo "vers=${{ github.event.inputs.daily }}" >> "$GITHUB_OUTPUT" \
+        || curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
         | jq -r ".workflow_runs[0] | .run_number" \
         | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
@@ -55,15 +63,30 @@ jobs:
     - name: lowercase github.repository
       run: |
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-    - name: Build
-      run: |
-        docker build \
-          --build-arg GTNH_VERSION=${{ needs.check.outputs.gtnh_version }} \
-          --build-arg GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }} \
-          -t ${{ env.IMAGE_NAME }}:latest \
-          --secret id=github_token,env=GITHUB_TOKEN .
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Docker meta
+      uses: docker/metadata-action@v5
+      id: meta
+      with:
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=daily-${{ needs.check.outputs.daily_version }}
+        labels: |
+          org.opencontainers.image.authors=Ableytner
+    - name: build
+      uses: docker/build-push-action@v6
+      with:
+        platforms: linux/amd64
+        pull: true
+        load: true
+        push: false
+        tags: ${{ env.IMAGE_NAME }}:latest
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GTNH_VERSION=${{ needs.check.outputs.gtnh_version }}
+          GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }}
+        secrets: |
+          github_token=${{ secrets.GITHUB_TOKEN }}
     - name: Export
       run: |
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
