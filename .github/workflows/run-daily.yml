@@ -119,13 +119,18 @@ jobs:
         docker start ${{ env.CONTAINER_ID }}
     - name: Wait for server to start
       run: |
-        declare -i c=300 \
-        && while (( c > 0 )); do
-          pipx run mcstatus==11.1.1 127.0.0.1 ping && break
-          (( c -= 10 ))
+        declare -i c=0
+        while (( c < 30 )); do
+          pipx run mcstatus==11.1.1 127.0.0.1 status > /dev/null 2>&1 && {
+            break
+          } || {
+            echo "attempt $((${c} + 1)): couldn't connect"
+          }
+          (( c += 1 ))
           sleep 10
         done
-        if (( c <= 0 )); then
+        if (( c >= 30 )); then
+          echo "server wasn't reachable after $((${c} * 10)) seconds"
           exit 1
         fi
     - name: Read MOTD
