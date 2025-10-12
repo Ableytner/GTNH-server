@@ -73,7 +73,7 @@ jobs:
           GTNH_VERSION=${{ needs.check.outputs.gtnh_version }}
           GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }}
         secrets: |
-          GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}
+          github_token=${{ secrets.GITHUB_TOKEN }}
     - name: Export
       run: |
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
