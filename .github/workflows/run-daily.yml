@@ -37,7 +37,7 @@ jobs:
     - id: fetch-daily
       name: get latest daily version number
       run: |
-        [[ ${{ github.event.inputs.daily }} != "" ]] \
+        [[ "${{ github.event.inputs.daily }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.daily }}" >> "$GITHUB_OUTPUT" \
         || curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
         | jq -r ".workflow_runs[0] | .run_number" \
