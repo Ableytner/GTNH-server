@@ -1,14 +1,14 @@
 # GTNH server docker images
 
-This repository contains docker images for hosting a dedicated server for the [GT New Horizons](https://www.gtnewhorizons.com/) Minecraft modpack.
+This repository contains docker images for running a dedicated server for the [GT New Horizons](https://www.gtnewhorizons.com/) Minecraft modpack.
 
-At the moment, only daily GTNH versions are supported, stable versions will follow in the future.
+At the moment, daily GTNH versions are supported and built automatically every day. Support for stable versions will follow in the future.
 
 It has worked without issues for the last few months for me, but you should use it at your own risk. (And don't forget to make regular backups!)
 
 ## Usage example
 
-This image can be used in a docker-compose.yml files as follows:
+This image can be used in a docker-compose.yml file as follows:
 ```yml
 services:
   mc:
@@ -29,13 +29,13 @@ services:
       WEBMAP: "TRUE"
     restart: no
 ```
-where ./server contains the minecraft server files and ./additional_mods contains any additional mods (as .jar files).
+where ./server contains the minecraft server files (automatically downloaded) and ./additional_mods contains any additional mods (as .jar files).
 
 As this image is based on [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server), it supports all environment variables allowed there. All possible variables are listed [here](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server).
 
 'MODPACK_VERSION' and 'DAILY_BUILD' in the MOTD are placeholder variables that get substituted with the current GT New Horizons version and daily build version.
 
-'WEBMAP' enables a [web map](https://github.com/GTNewHorizons/GTNH-Web-Map) of the server world, which is reachable through the browser on port 8123. You may need to open ports in your firewall and/or router.
+'WEBMAP' enables a [web map](https://github.com/GTNewHorizons/GTNH-Web-Map) of the server world, which is accessible through a browser on port 8123. You may need to open ports in your firewall and/or router.
 
 ## Upgrading from nightlys (old) to dailys
 
@@ -53,7 +53,7 @@ To upgrade an existing server to the new format:
 
 Many thanks to [Geoff Bourne](https://github.com/itzg) for creating the [docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) image, which this project is based on!
 
-Many thanks to [David Lindström](https://github.com/dvdmandt) for forking and maintaining the [GTNH-Web-Map](https://github.com/GTNewHorizons/GTNH-Web-Map) mod, which is used as an optional web map.
+Many thanks to [David Lindström](https://github.com/dvdmandt) for forking and maintaining the [GTNH-Web-Map](https://github.com/GTNewHorizons/GTNH-Web-Map) mod, which this image includes.
 
 ### TO-DO
 
