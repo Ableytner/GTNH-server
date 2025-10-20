@@ -1,4 +1,4 @@
-name: Build the given stable release
+name: Build a stable release
 
 on:
   workflow_dispatch:
@@ -58,7 +58,6 @@ jobs:
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           GTNH_VERSION=${{ needs.check.outputs.gtnh_version }}
-          GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }}
         secrets: |
           github_token=${{ secrets.GITHUB_TOKEN }}
     - name: Export
@@ -109,7 +108,7 @@ jobs:
         docker load --input /tmp/image.tar
     - name: Create server container
       run: |
-        docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \
+        docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-stable' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \
         | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
     - name: Start server container
       run: |
@@ -140,11 +139,6 @@ jobs:
         echo ${{ env.MOTD }} \
         | grep -oP "(?<=GT New Horizons ).+(?=-)" \
         | [[ $(cat -) == ${{ needs.check.outputs.gtnh_version }} ]]
-    - name: Check MOTD daily version
-      run: |
-        echo ${{ env.MOTD }} \
-        | grep -oP "(?<=-daily).+$" \
-        | [[ $(cat -) == ${{ needs.check.outputs.daily_version }} ]]
     - name: Print out server container logs
       if: failure()
       run: |
@@ -180,12 +174,12 @@ jobs:
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
-    - name: Push daily
+    - name: Push stable
       run: |
-        docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
-        docker push ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
-        docker tag ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }} ghcr.io/${{ env.IMAGE_NAME }}:daily
-        docker push ghcr.io/${{ env.IMAGE_NAME }}:daily
+        docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.gtnh_version }}
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.gtnh_version }}
+        docker tag ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.gtnh_version }} ghcr.io/${{ env.IMAGE_NAME }}:stable
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:stable
     - name: Remove local image
       if: always()
       run: |
