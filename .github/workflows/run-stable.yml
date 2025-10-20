@@ -1,0 +1,196 @@
+name: Build the given stable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "the stable version to use (example input: 2.8.1)"
+        type: string
+        required: true
+
+jobs:
+  check:
+    runs-on: [self-hosted, linux]
+    outputs:
+      gtnh_version: ${{ steps.fetch-version.outputs.vers }}
+    steps:
+    - id: fetch-version
+      name: get latest gtnh version
+      run: |
+        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
+        | jq -r ".[] | .name" \
+        | grep -oP "^${{ github.event.inputs.version }}$" \
+        | head -n 1 \
+        | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
+    - name: print modpack version number
+      run: |
+        [[ ${{ steps.fetch-version.outputs.vers }} == "" ]] \
+        && echo "modpack version number ${{ github.event.inputs.version }} wasn't found on github, exiting..." \
+        && exit 1 \
+        || echo "Found modpack version ${{ steps.fetch-version.outputs.vers }}"
+
+  build:
+    needs: [check]
+    runs-on: [self-hosted, linux]
+    steps:
+    - uses: actions/checkout@v3
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: Docker meta
+      uses: docker/metadata-action@v5
+      id: meta
+      with:
+        images: |
+          ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=raw,value=${{ needs.check.outputs.gtnh_version }}
+        labels: |
+          org.opencontainers.image.authors=Ableytner
+    - name: build
+      uses: docker/build-push-action@v6
+      with:
+        platforms: linux/amd64
+        pull: true
+        load: true
+        push: false
+        tags: ${{ env.IMAGE_NAME }}:latest
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GTNH_VERSION=${{ needs.check.outputs.gtnh_version }}
+          GTNH_DAILY_BUILD=${{ needs.check.outputs.daily_version }}
+        secrets: |
+          github_token=${{ secrets.GITHUB_TOKEN }}
+    - name: Export
+      run: |
+        docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
+    - name: Cache docker image
+      run: |
+        curl --fail-with-body -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server" -F "issue_id=1" http://192.168.0.145:25000/dump
+    - name: Remove local image
+      run: |
+        docker image rm ${{ env.IMAGE_NAME }}
+
+  test:
+    needs: [check, build]
+    runs-on: [self-hosted, linux]
+    steps:
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.12"
+    - name: Install tzdata
+      run: |
+        sudo ln -snf /usr/share/zoneinfo/$(curl --fail-with-body \"https://ipapi.co/timezone\") /etc/localtime
+        sudo apt-get update
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
+    - name: Set up pipx
+      # see https://stackoverflow.com/a/63153978/15436169 for more info
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install pipx
+    - name: install mcstatus
+      run: |
+        pipx install mcstatus==11.1.1
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: Download cached docker image
+      run: |
+        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+    - name: Load image
+      run: |
+        docker load --input /tmp/image.tar
+    - name: Create server container
+      run: |
+        docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \
+        | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
+    - name: Start server container
+      run: |
+        docker start ${{ env.CONTAINER_ID }}
+    - name: Wait for server to start
+      run: |
+        declare -i c=0
+        while (( c < 30 )); do
+          pipx run mcstatus==11.1.1 127.0.0.1 status > /dev/null 2>&1 && {
+            break
+          } || {
+            echo "attempt $((${c} + 1)): couldn't connect"
+          }
+          (( c += 1 ))
+          sleep 10
+        done
+        if (( c >= 30 )); then
+          echo "server wasn't reachable after $((${c} * 10)) seconds"
+          exit 1
+        fi
+    - name: Read MOTD
+      run: |
+        pipx run mcstatus==11.1.1 127.0.0.1 status \
+        | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
+        | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
+    - name: Check MOTD GTNH version
+      run: |
+        echo ${{ env.MOTD }} \
+        | grep -oP "(?<=GT New Horizons ).+(?=-)" \
+        | [[ $(cat -) == ${{ needs.check.outputs.gtnh_version }} ]]
+    - name: Check MOTD daily version
+      run: |
+        echo ${{ env.MOTD }} \
+        | grep -oP "(?<=-daily).+$" \
+        | [[ $(cat -) == ${{ needs.check.outputs.daily_version }} ]]
+    - name: Print out server container logs
+      if: failure()
+      run: |
+        docker logs ${{ env.CONTAINER_ID }}
+    - name: Stop and delete server container
+      if: always()
+      run: |
+        docker rm -f ${{ env.CONTAINER_ID }}
+    - name: Remove cached docker image on failure
+      if: failure()
+      run: |
+        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
+
+  push:
+    needs: [check, test]
+    runs-on: [self-hosted, linux]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: Download cached docker image
+      run: |
+        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+    - name: Load image
+      run: |
+        docker load --input /tmp/image.tar
+    - name: Push daily
+      run: |
+        docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
+        docker tag ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }} ghcr.io/${{ env.IMAGE_NAME }}:daily
+        docker push ghcr.io/${{ env.IMAGE_NAME }}:daily
+    - name: Remove local image
+      if: always()
+      run: |
+        docker image rm ${{ env.IMAGE_NAME }}
+    - name: Remove cached docker image
+      if: always()
+      run: |
+        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
