@@ -1,0 +1,164 @@
+#!/bin/bash
+
+# shellcheck source=start-utils
+. /image/scripts/start-utils
+
+# some primitive tests
+# $(( $(version_to_int "2.8.1" "55") > $(version_to_int "2.8.1" ) )) should be false
+# $(( $(version_to_int "2.8.1" "55") > $(version_to_int "2.8" ) )) should be true
+# $(( $(version_to_int "2.8.1" ) > $(version_to_int "2.8" ) )) should be true
+# $(( $(version_to_int "2.9" ) > $(version_to_int "2.8.99" ) )) should be true
+function version_to_int() {
+    local major=$(echo "$1" | cut -d '.' -f1) # up to 99
+    local minor=$(echo "$1" | cut -d '.' -f2) # up to 99
+    local patch=$(echo "$1" | cut -d '.' -f3) # up to 99
+    local daily="$2" # up to 9999
+
+    major="$(( ${major:-00} * 100000000 ))"
+    minor="$(( ${minor:-00} * 1000000 ))"
+    patch="$(( ${patch:-00} * 10000 ))"
+    daily="${daily:-9999}"
+
+    echo $(( $major + $minor + $patch + $daily ))
+}
+
+function substitute_motd() {
+    # for more details see: https://unix.stackexchange.com/a/648548
+
+    local tmppath=$(mktemp)
+
+    echo "${1}" \
+    | sed 's/MODPACK_VERSION/'"${2}"'/' \
+    | sed 's/DAILY_BUILD/'"${3}"'/' \
+    > $tmppath
+    local motd=$(cat $tmppath)
+
+    rm -f $tmppath
+
+    echo ${motd}
+}
+
+function create_backup() {
+    cd /data
+
+    if [[ ! -d World ]]; then
+        log "not creating backup as World folder doesn't exist"
+    else
+        local backup_file="docker-backups/${1}.zip"
+
+        log "creating backup: ${backup_file}"
+
+        mkdir -p docker-backups/new
+        chown minecraft:minecraft docker-backups/new
+
+        if [[ -f "${backup_file}" ]]; then
+            log "deleting old backup"
+            rm "${backup_file}"
+        fi
+
+        mkdir -p docker-backups/new/config
+        chown minecraft:minecraft docker-backups/new/config
+
+        cp -rp serverutilities visualprospecting World docker-backups/new/
+        cp -rp config/JourneyMapServer docker-backups/new/config/
+        cd docker-backups/new
+        zip -rq "../../${backup_file}" .
+        cd ../..
+
+        log "cleaning up"
+        rm -rf docker-backups/new
+    fi
+}
+
+function load_backup() {
+    cd /data
+
+    local backup_file="docker-backups/${1}.zip"
+
+    if [[ ! -f "${backup_file}" ]]; then
+        log "backup file ${backup_file} wasn't found"
+        if [[ -f "docker-backups/old.zip" ]]; then
+            log "falling back to backup file old.zip"
+            backup_file="docker-backups/old.zip"
+        else
+            log "ERR backup zip not found: ${backup_file}"
+            exit 1
+        fi
+    fi
+
+    log "loading backup: ${backup_file}"
+
+    mkdir -p docker-backups/new
+    chown minecraft:minecraft docker-backups/new
+
+    rm -rf serverutilities visualprospecting World config/JourneyMapServer
+
+    unzip -q $backup_file -d docker-backups/new
+    chown -R minecraft:minecraft docker-backups/new
+    # fix question mark permissions
+    # https://unix.stackexchange.com/a/393603
+    chmod -R a+X docker-backups/new
+    mv docker-backups/new/serverutilities docker-backups/new/visualprospecting docker-backups/new/World .
+    mv docker-backups/new/config/JourneyMapServer ./config
+
+    log "cleaning up"
+    rm -rf docker-backups/new
+}
+
+function install_server() {
+    cd /data
+
+    if [[ ! -f /download/server.zip ]]; then
+        log "ERR server.zip not found"
+        exit 1
+    fi
+
+    log "installing server.zip"
+
+    mkdir -p docker-backups/install && chown minecraft:minecraft docker-backups/install
+    mkdir -p docker-backups/install/config && chown minecraft:minecraft docker-backups/install/config
+
+    unzip -q /download/server.zip -d docker-backups/install/
+
+    chown -R minecraft:minecraft docker-backups/install
+    # fix question mark permissions
+    # https://unix.stackexchange.com/a/393603
+    chmod -R a+X docker-backups/install
+
+    # persist JourneyMap id
+    cp -rp config/JourneyMapServer docker-backups/install/config/
+
+    rm -rf config libraries mods *.jar java9args.txt
+
+    cd docker-backups/install
+    mv config libraries mods *.jar java9args.txt ../..
+    if [[ ! -d ../../serverutilities ]]; then
+        mv serverutilities ../..
+    fi
+    mv -n server-icon.png ../..
+
+    cd ../..
+
+    log "cleaning up"
+    rm -rf docker-backups/install
+}
+
+function install_additional_mods() {
+    cd /data
+
+    if [[ -d /mods ]]; then
+        log "copying additional mods"
+
+        cp -rp /mods/* mods/
+    fi
+
+    if [[ $(find ./mods -maxdepth 1 -name 'gtnh-web-map-*.jar' -printf 1 -quit) ]]; then
+        log "removing existing web map jar file"
+        rm -f mods/gtnh-web-map-*.jar
+    fi
+
+    if [[ ${1} != "" ]]; then
+        log "installing gtnh web map"
+        mv /download/gtnh-web-map-*.jar mods/
+    fi
+}
