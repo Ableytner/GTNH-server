@@ -1,0 +1,22 @@
+name: Delete untagged docker images
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 12 * *' # 04:00am, on day 12 of every month
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  delete-untagged:
+    runs-on: self-hosted
+    steps:
+    - name: lowercase github.repository
+      run: |
+        echo "PACKAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]' | cut -d "/" -f2`" >>${GITHUB_ENV}
+    - uses: dataaxiom/ghcr-cleanup-action@v1
+      with:
+        package: ${{ env.PACKAGE_NAME }}
+        delete-untagged: true

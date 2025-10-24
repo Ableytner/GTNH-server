@@ -215,6 +215,9 @@ jobs:
         docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
         docker push ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }}
         docker tag ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ needs.check.outputs.daily_version }} ghcr.io/${{ env.IMAGE_NAME }}:daily
+    - name: Push daily to daily tag only if version was autodetected
+      if: "${{ github.event.inputs.daily == '' }}"
+      run: |
         docker push ghcr.io/${{ env.IMAGE_NAME }}:daily
     - name: Remove local image
       if: always()
