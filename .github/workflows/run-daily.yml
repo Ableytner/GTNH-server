@@ -10,6 +10,10 @@ on:
   schedule:
     - cron: '0 4 * * *' # 4:00am UTC every day
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     runs-on: [self-hosted, linux]
