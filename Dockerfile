@@ -20,11 +20,12 @@ RUN --mount=type=secret,id=github_token \
   && unzip server.zip -d . \
   && rm server.zip \
   && mv *.zip server.zip \
-  else \
+  ; else \
   curl --fail-with-body -L https://downloads.gtnewhorizons.com/ServerPacks/?raw \
   | grep -P "${GTNH_VERSION}_Server_Java_1" \
-  | curl --fail-with-body -L "$(cat -)" -o /download/server.zip \
-  fi
+  | xargs -I {} \
+  curl --fail-with-body -L {} -o /download/server.zip \
+  ; fi
 
 # download gtnh web map
 RUN --mount=type=secret,id=github_token \
