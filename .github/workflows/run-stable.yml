@@ -179,8 +179,6 @@ jobs:
       run: |
         docker load --input /tmp/image.tar
     - name: Push stable
-      # never push
-      if: "${{ 'a' == 'b' }}"
       run: |
         docker tag ${{ env.IMAGE_NAME }}:latest ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.gtnh_version }}
         docker push ghcr.io/${{ env.IMAGE_NAME }}:${{ needs.check.outputs.gtnh_version }}

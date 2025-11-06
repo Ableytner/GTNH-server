@@ -7,6 +7,8 @@ on:
         description: the daily build to use (fetches latest if not provided)
         type: number
         required: false
+  schedule:
+    - cron: '0 4 * * *' # 4:00am UTC every day
 
 defaults:
   run:
