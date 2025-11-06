@@ -69,7 +69,7 @@ jobs:
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
     - name: Cache docker image
       run: |
-        curl --fail-with-body -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server" -F "issue_id=1" http://192.168.0.145:25000/dump
+        curl --fail-with-body -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server-stable-${{ needs.check.outputs.gtnh_version }}" -F "issue_id=1" http://192.168.0.145:25000/dump
     - name: Remove local image
       run: |
         docker image rm ${{ env.IMAGE_NAME }}
@@ -106,7 +106,7 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Download cached docker image
       run: |
-        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server-stable-${{ needs.check.outputs.gtnh_version }}/1/image.tar -o /tmp/image.tar
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
@@ -154,7 +154,7 @@ jobs:
     - name: Remove cached docker image on failure
       if: failure()
       run: |
-        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
+        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server-stable-${{ needs.check.outputs.gtnh_version }}/1/image.tar
 
   push:
     needs: [check, test]
@@ -174,7 +174,7 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Download cached docker image
       run: |
-        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar -o /tmp/image.tar
+        curl --fail-with-body -X GET http://192.168.0.145:25000/attachments/gtnh-server-stable-${{ needs.check.outputs.gtnh_version }}/1/image.tar -o /tmp/image.tar
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
@@ -193,4 +193,4 @@ jobs:
     - name: Remove cached docker image
       if: always()
       run: |
-        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server/1/image.tar
+        curl --fail-with-body -X DELETE http://192.168.0.145:25000/attachments/gtnh-server-stable-${{ needs.check.outputs.gtnh_version }}/1/image.tar
