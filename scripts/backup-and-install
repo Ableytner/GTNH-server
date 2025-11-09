@@ -1,157 +1,66 @@
 #!/bin/bash
 
-# shellcheck source=start-utils
-. /image/scripts/start-utils
+. /gtnh/scripts/gtnh-utils
 
 cd /data
 mkdir -p docker-backups && chown -R minecraft:minecraft docker-backups
 
+IMAGE_VERSION=$(version_to_int "${GTNH_VERSION}" "${GTNH_DAILY_BUILD}")
+
+log "running GTNH-server with versions GTNH_VERSION: ${GTNH_VERSION}, GTNH_DAILY_BUILD: ${GTNH_DAILY_BUILD}, IMAGE_VERSION: ${IMAGE_VERSION}"
+
 if [[ -f docker-backups/current.txt ]]; then
-    CURRENT_GTNH_DAILY_BUILD=$(<docker-backups/current.txt)
+    INSTALLED_IMAGE_VERSION=$(<docker-backups/current.txt)
 fi
-echo $GTNH_DAILY_BUILD > docker-backups/current.txt
+echo $IMAGE_VERSION > docker-backups/current.txt
 
-function backup_func {
-    cd /data
+# convert legacy backups
+if [[ -v INSTALLED_IMAGE_VERSION ]] && (( $INSTALLED_IMAGE_VERSION < 10000 )); then
+    log "trying to rename backups to new format"
 
-    mkdir -p docker-backups/new && chown minecraft:minecraft docker-backups/new
+    cd docker-backups
 
-    if [[ -v CURRENT_GTNH_DAILY_BUILD ]] && (( CURRENT_GTNH_DAILY_BUILD > GTNH_DAILY_BUILD )); then
-        BACKUP_FILE="docker-backups/${GTNH_DAILY_BUILD}.zip"
+    # https://unix.stackexchange.com/a/478454
+    if [[ $(ls -1 *.zip 2>/dev/null | wc -l) != 0 ]]; then
+        log "keeping newest legacy backup as old.zip"
 
-        if [[ ! -f "${BACKUP_FILE}" ]]; then
-            log "backup file ${BACKUP_FILE} wasn't found"
-            if [[ -f "docker-backups/old.zip" ]]; then
-                log "falling back to backup file old.zip"
-                BACKUP_FILE="docker-backups/old.zip"
-            else
-                log "ERR backup zip not found: ${BACKUP_FILE}"
-                exit 1
-            fi
-        fi
+        rm -f old.zip
 
-        log "loading backup: ${BACKUP_FILE}"
+        find ./*.zip -maxdepth 1 ! -name old.zip -type f -print0 \
+        | xargs -I {} -0 basename {} \
+        | cut -d "." -f1 \
+        | sort -nr \
+        | head -n 1 \
+        | mv "$(cat -).zip" old.zip
 
-        rm -rf serverutilities visualprospecting World config/JourneyMapServer
-
-        unzip -q $BACKUP_FILE -d docker-backups/new
-        chown -R minecraft:minecraft docker-backups/new
-        # fix question mark permissions
-        # https://unix.stackexchange.com/a/393603
-        chmod -R a+X docker-backups/new
-        mv docker-backups/new/serverutilities docker-backups/new/visualprospecting docker-backups/new/World .
-        mv docker-backups/new/config/JourneyMapServer ./config
+        find ./*.zip -maxdepth 1 ! -name old.zip -type f -delete &>/dev/null
     else
-        if [[ ! -d World ]]; then
-            log "not creating backup as World folder doesn't exist"
-        else
-            # use default value if variable doesn't exist
-            # https://www.debuntu.org/how-to-bash-parameter-expansion-and-default-values/
-            BACKUP_FILE="docker-backups/${CURRENT_GTNH_DAILY_BUILD:-old}.zip"
-
-            log "creating backup: ${BACKUP_FILE}"
-
-            if [[ -f "${BACKUP_FILE}" ]]; then
-                log "deleting old backup"
-                rm "${BACKUP_FILE}"
-            fi
-
-            mkdir -p docker-backups/new/config && chown minecraft:minecraft docker-backups/new/config
-
-            cp -rp serverutilities visualprospecting World docker-backups/new/
-            cp -rp config/JourneyMapServer docker-backups/new/config/
-            cd docker-backups/new
-            zip -rq "../../${BACKUP_FILE}" .
-            cd ../..
-        fi
+        log "No backups to keep"
     fi
 
-    log "cleaning up"
-    rm -rf docker-backups/new
-}
+    cd ..
+fi
 
-function install_func {
-    cd /data
+# load or create backup
+if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION > IMAGE_VERSION )); then
+    load_backup "${IMAGE_VERSION}"
+else
+    create_backup "${IMAGE_VERSION}"
+fi
 
-    mkdir -p docker-backups/install && mkdir -p docker-backups/install/config && chown minecraft:minecraft docker-backups/install
+# install server files if needed
+if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION == IMAGE_VERSION )); then
+    log "skipping install step for already installed version"
+else
+    install_server
+fi
 
-    if [[ -v CURRENT_GTNH_DAILY_BUILD ]] && (( CURRENT_GTNH_DAILY_BUILD == GTNH_DAILY_BUILD )); then
-        log "skipping install step for already installed version"
-    else
-        if [[ ! -f /download/server.zip ]]; then
-            log "ERR server.zip not found"
-            exit 1
-        fi
+# always add additional mods
+install_additional_mods ${WEBMAP}
 
-        log "installing server.zip"
-
-        unzip -q /download/server.zip -d docker-backups/install/
-
-        chown -R minecraft:minecraft docker-backups/install
-        # fix question mark permissions
-        # https://unix.stackexchange.com/a/393603
-        chmod -R a+X docker-backups/install
-
-        # persist JourneyMap id
-        cp -rp config/JourneyMapServer docker-backups/install/config/
-
-        rm -rf config libraries mods *.jar java9args.txt
-
-        cd docker-backups/install
-        mv config libraries mods *.jar java9args.txt ../..
-        if [[ ! -d ../../serverutilities ]]; then
-            mv serverutilities ../..
-        fi
-        mv -n server-icon.png ../..
-        cd ../..
-    fi
-
-    if [[ -d /mods ]]; then
-        log "copying mods"
-
-        cp -rp /mods/* mods/
-    fi
-
-    if [[ $(find ./mods -maxdepth 1 -name 'gtnh-web-map-*.jar' -printf 1 -quit) ]]; then
-        log "removing existing web map jar file"
-        rm -f mods/gtnh-web-map-*.jar
-    fi
-
-    if [[ -v WEBMAP ]]; then
-        log "installing gtnh web map"
-        mv /download/gtnh-web-map-*.jar mods/
-    fi
-
-    log "cleaning up"
-    rm -rf docker-backups/install
-}
-
-function substitute_motd {
-    # for more details see: https://unix.stackexchange.com/a/648548
-
-    cd /data
-
-    TMPPATH=$(mktemp)
-
-    echo "before substitution: ${MOTD}"
-
-    echo ${MOTD} \
-    | sed 's/MODPACK_VERSION/'"${GTNH_VERSION}"'/' \
-    | sed 's/DAILY_BUILD/'"${GTNH_DAILY_BUILD}"'/' \
-    > "${TMPPATH}"
-    export MOTD=$(cat "${TMPPATH}")
-
-    rm -f "${TMPPATH}"
-
-    echo "after substitution: ${MOTD}"
-    echo ${GTNH_VERSION}
-    echo ${GTNH_DAILY_BUILD}
-}
-
-backup_func
-install_func
+# substitute MOTD
 if [[ -v MOTD ]]; then
-    substitute_motd
+    export MOTD=$(substitute_motd "${MOTD}" "${GTNH_VERSION}" "${GTNH_DAILY_BUILD}")
     echo "substituted MOTD to ${MOTD}"
 fi
 
