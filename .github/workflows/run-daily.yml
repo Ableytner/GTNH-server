@@ -8,7 +8,7 @@ on:
         type: number
         required: false
   schedule:
-    - cron: '0 4 * * *' # 4:00am UTC every day
+    - cron: '51 * * * *' # every hour at 51 minutes
 
 defaults:
   run:
@@ -20,6 +20,7 @@ jobs:
     outputs:
       gtnh_version: ${{ steps.fetch-version.outputs.vers }}
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
+      should_build_daily: ${{ env.build_daily }}
     steps:
     - name: check if latest daily build failed
       if: "${{ github.event.inputs.daily == '' }}"
@@ -58,9 +59,23 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
+    - name: lowercase github.repository
+      run: |
+        echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
+    - name: ensure that newest daily version isn't already built
+      if: "${{ github.event.inputs.daily == '' }}"
+      run: |
+        docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
+        && echo "build_daily='no'" >> "$GITHUB_OUTPUT" \
+        || echo "build_daily='yes'" >> "$GITHUB_OUTPUT"
+    - name: always build newest daily if run was started manually
+      if: "${{ github.event.inputs.daily != '' }}"
+      run: |
+        echo "build_daily='yes'" >> "$GITHUB_OUTPUT"
 
   build:
     needs: [check]
+    if: "${{ needs.check.outputs.should_build_daily == 'yes' }}"
     runs-on: [self-hosted, linux]
     steps:
     - uses: actions/checkout@v3
