@@ -7,37 +7,39 @@ mkdir -p docker-backups && chown -R minecraft:minecraft docker-backups
 
 IMAGE_VERSION=$(version_to_int "${GTNH_VERSION}" "${GTNH_DAILY_BUILD}")
 
-# convert legacy backups
+log "running GTNH-server with versions GTNH_VERSION: ${GTNH_VERSION}, GTNH_DAILY_BUILD: ${GTNH_DAILY_BUILD}, IMAGE_VERSION: ${IMAGE_VERSION}"
+
 if [[ -f docker-backups/current.txt ]]; then
     INSTALLED_IMAGE_VERSION=$(<docker-backups/current.txt)
-
-    if (( $INSTALLED_IMAGE_VERSION < 10000 )); then
-        log "trying to rename backups to new format"
-
-        cd docker-backups
-
-        # https://unix.stackexchange.com/a/478454
-        if [[ $(ls -1 *.zip 2>/dev/null | wc -l) != 0 ]]; then
-            log "keeping newest legacy backup as old.zip"
-
-            rm -f old.zip
-
-            find ./*.zip -maxdepth 1 ! -name old.zip -type f -print0 \
-            | xargs -I {} -0 basename {} \
-            | cut -d "." -f1 \
-            | sort -nr \
-            | head -n 1 \
-            | mv "$(cat -).zip" old.zip
-
-            find ./*.zip -maxdepth 1 ! -name old.zip -type f -delete &>/dev/null
-        else
-            log "No backups to keep"
-        fi
-
-        cd ..
-    fi
 fi
 echo $IMAGE_VERSION > docker-backups/current.txt
+
+# convert legacy backups
+if [[ -v INSTALLED_IMAGE_VERSION ]] && (( $INSTALLED_IMAGE_VERSION < 10000 )); then
+    log "trying to rename backups to new format"
+
+    cd docker-backups
+
+    # https://unix.stackexchange.com/a/478454
+    if [[ $(ls -1 *.zip 2>/dev/null | wc -l) != 0 ]]; then
+        log "keeping newest legacy backup as old.zip"
+
+        rm -f old.zip
+
+        find ./*.zip -maxdepth 1 ! -name old.zip -type f -print0 \
+        | xargs -I {} -0 basename {} \
+        | cut -d "." -f1 \
+        | sort -nr \
+        | head -n 1 \
+        | mv "$(cat -).zip" old.zip
+
+        find ./*.zip -maxdepth 1 ! -name old.zip -type f -delete &>/dev/null
+    else
+        log "No backups to keep"
+    fi
+
+    cd ..
+fi
 
 # load or create backup
 if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION > IMAGE_VERSION )); then
