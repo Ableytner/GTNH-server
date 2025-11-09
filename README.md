@@ -2,9 +2,11 @@
 
 This repository contains docker images for running a dedicated server for the [GT New Horizons](https://www.gtnewhorizons.com/) Minecraft modpack.
 
-At the moment, daily GTNH versions are supported and built automatically every day. Support for stable versions will follow in the future.
+Stable GTNH versions are released under the `stable` tag, and built manually whenever a new version releases.
 
-It has worked without issues for the last few months for me, but you should use it at your own risk. (And don't forget to make regular backups!)
+Daily GTNH versions are built automatically every day and available under the `daily` tag.
+
+There is also backup / rollback functionality builtin, but you shouldn't rely on it. (Don't forget to make regular backups!)
 
 ## Usage example
 
@@ -57,6 +59,5 @@ Many thanks to [David Lindström](https://github.com/dvdmandt) for forking and m
 
 ### TO-DO
 
-* Build images for stable and experimental releases
 * Remove existing mod if modid matches with mod from additional_mods to allow for manually adding newer versions
 * Create tests for backup/rollback functionality
