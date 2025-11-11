@@ -79,9 +79,7 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
-        [[ ${{ steps.should-build-daily.outputs.build_daily }} == "no" ]] \
-        && echo "daily version already exists, skipping build step" \
-        || echo "daily version doesn't yet exist, proceeding to build step"
+        echo "should daily version be built: ${{ steps.should-build-daily.outputs.build_daily }}"
 
   build:
     needs: [check]
