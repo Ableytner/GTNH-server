@@ -64,10 +64,10 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.daily }}" == "" ]]; then \
         docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
-        && echo "build_daily='no'" >> "$GITHUB_OUTPUT" \
-        || echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
+        || echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; else \
-        echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; fi
     - name: print check summary
       run: |
@@ -79,9 +79,7 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
-        [[ ${{ steps.should-build-daily.outputs.build_daily }} == "no" ]] \
-        && echo "daily version already exists, skipping build step" \
-        || echo "daily version doesn't yet exist, proceeding to build step"
+        echo "should daily version be built: ${{ steps.should-build-daily.outputs.build_daily }}"
 
   build:
     needs: [check]
