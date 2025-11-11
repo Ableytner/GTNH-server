@@ -49,7 +49,7 @@ RUN dos2unix /gtnh/scripts/*
 ENTRYPOINT [ "/gtnh/scripts/backup-and-install" ]
 HEALTHCHECK --start-period=2m --retries=2 --interval=30s CMD mc-health
 
-RUN if [ "$GTNH_DAILY_BUILD" ]; then \
+RUN if [ "$GTNH_DAILY_BUILD" != "" ]; then \
   echo "gtnh-version=${GTNH_VERSION}\ndaily=${GTNH_DAILY_BUILD:-1}\n" >> /etc/image.properties \
   ; else \
   echo "gtnh-version=${GTNH_VERSION}\n" >> /etc/image.properties \

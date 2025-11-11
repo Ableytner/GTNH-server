@@ -28,7 +28,7 @@ jobs:
         | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
       run: |
-        [[ ${{ steps.fetch-version.outputs.vers }} == "" ]] \
+        [[ "${{ steps.fetch-version.outputs.vers }}" == "" ]] \
         && echo "modpack version number ${{ github.event.inputs.version }} wasn't found on github, exiting..." \
         && exit 1 \
         || echo "Found modpack version ${{ steps.fetch-version.outputs.vers }}"
