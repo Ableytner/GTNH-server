@@ -64,10 +64,10 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.daily }}" == "" ]]; then \
         docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
-        && echo "build_daily='no'" >> "$GITHUB_OUTPUT" \
-        || echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
+        || echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; else \
-        echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; fi
     - name: print check summary
       run: |
