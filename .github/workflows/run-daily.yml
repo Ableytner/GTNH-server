@@ -20,7 +20,7 @@ jobs:
     outputs:
       gtnh_version: ${{ steps.fetch-version.outputs.vers }}
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
-      should_build_daily: ${{ env.build_daily }}
+      should_build_daily: ${{ steps.should-build-daily.outputs.build_daily }}
     steps:
     - name: check if latest daily build failed
       if: "${{ github.event.inputs.daily == '' }}"
@@ -59,16 +59,16 @@ jobs:
     - name: lowercase github.repository
       run: |
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
-    - name: ensure that newest daily version isn't already built
-      if: "${{ github.event.inputs.daily == '' }}"
+    - id: should-build-daily
+      name: ensure that newest daily version isn't already built
       run: |
-        docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null \
+        if [[ ${{ github.event.inputs.daily }} == '' ]]; then \
+        docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
         && echo "build_daily='no'" >> "$GITHUB_OUTPUT" \
-        || echo "build_daily='yes'" >> "$GITHUB_OUTPUT"
-    - name: always build newest daily if run was started manually
-      if: "${{ github.event.inputs.daily != '' }}"
-      run: |
-        echo "build_daily='yes'" >> "$GITHUB_OUTPUT"
+        || echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        ; else \
+        echo "build_daily='yes'" >> "$GITHUB_OUTPUT" \
+        ; fi
     - name: print check summary
       run: |
         [[ ${{ steps.fetch-version.outputs.vers }} == "" ]] \
@@ -79,7 +79,7 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
-        [[ ${{ env.build_daily }} == "no" ]] \
+        [[ ${{ steps.should-build-daily.outputs.build_daily }} == "no" ]] \
         && echo "daily version already exists, skipping build step" \
         || echo "daily version doesn't yet exist, proceeding to build step"
 
