@@ -68,7 +68,6 @@ jobs:
         | jq -r "first(.workflow_runs[] | select(.status==\"completed\")) | .logs_url" \
         | xargs -I{} \
         curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
-        || cat logs.zip; exit 1 \
         && rm -rf /tmp/w-logs \
         && unzip logs.zip -d /tmp/w-logs \
         && find /tmp/w-logs/check/ -regex ".*[0-9]+_print\ check\ summary\.txt" \
