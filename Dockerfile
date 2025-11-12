@@ -13,9 +13,11 @@ RUN --mount=type=secret,id=github_token \
   if [ "$GTNH_DAILY_BUILD" != "" ]; then \
   curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=100 \
   | jq -r ".workflow_runs[] | select(.run_number==${GTNH_DAILY_BUILD}) | .url" \
-  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)/artifacts" \
+  | xargs -I{} \
+  curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "{}/artifacts" \
   | jq -r '.artifacts[] | select(.name | endswith("server-new-java")) | .archive_download_url' \
-  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)" -o /download/server.zip \
+  | xargs -I{} \
+  curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "{}" -o /download/server.zip \
   && cd /download \
   && unzip server.zip -d . \
   && rm server.zip \
@@ -31,7 +33,8 @@ RUN --mount=type=secret,id=github_token \
 RUN --mount=type=secret,id=github_token \
   curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GTNH-Web-Map/releases/latest \
   | jq -r '.assets[] | select(.name | test("gtnh-web-map-[\\d\\.]+\\.jar")) | .browser_download_url' \
-  | curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "$(cat -)" --remote-name \
+  | xargs -I{} \
+  curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "{}" --remote-name \
   && mv gtnh-web-map-*.jar /download/
 
 # set default environment variables for GTNH

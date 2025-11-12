@@ -25,7 +25,8 @@ jobs:
         | jq -r ".[] | .name" \
         | grep -oP "^${{ github.event.inputs.version }}$" \
         | head -n 1 \
-        | echo "vers=$(cat -)" >> "$GITHUB_OUTPUT"
+        | xargs -I{} \
+        echo "vers={}" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
       run: |
         [[ "${{ steps.fetch-version.outputs.vers }}" == "" ]] \
@@ -113,7 +114,8 @@ jobs:
     - name: Create server container
       run: |
         docker create --name minecraft-gtnh3 -p 25565:25565 -e MEMORY=8G -e MOTD='GT New Horizons MODPACK_VERSION-stable' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \
-        | echo "CONTAINER_ID=`echo $(cat -)`" >>${GITHUB_ENV}
+        | xargs -I{} \
+        echo "CONTAINER_ID={}" >>${GITHUB_ENV}
     - name: Start server container
       run: |
         docker start ${{ env.CONTAINER_ID }}
@@ -137,7 +139,8 @@ jobs:
       run: |
         pipx run mcstatus==11.1.1 127.0.0.1 status \
         | grep -oP "(?<=raw\=\').+(?=\', bedrock=False)" \
-        | echo "MOTD=`echo $(cat -)`" >>${GITHUB_ENV}
+        | xargs -I{} \
+        echo "MOTD=\"{}\"" >>${GITHUB_ENV}
     - name: Check MOTD GTNH version
       run: |
         echo ${{ env.MOTD }} \
