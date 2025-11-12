@@ -31,7 +31,8 @@ if [[ -v INSTALLED_IMAGE_VERSION ]] && (( $INSTALLED_IMAGE_VERSION < 10000 )); t
         | cut -d "." -f1 \
         | sort -nr \
         | head -n 1 \
-        | mv "$(cat -).zip" old.zip
+        | xargs -I{} \
+        mv "{}.zip" old.zip
 
         find ./*.zip -maxdepth 1 ! -name old.zip -type f -delete &>/dev/null
     else
