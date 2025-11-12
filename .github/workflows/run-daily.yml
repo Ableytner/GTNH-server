@@ -17,9 +17,6 @@ defaults:
 jobs:
   check:
     runs-on: [self-hosted, linux]
-    permissions:
-      contents: read
-      actions: read
     outputs:
       gtnh_version: ${{ steps.fetch-version.outputs.vers }}
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
@@ -72,7 +69,7 @@ jobs:
         | xargs -I{} echo "{}" $(sleep 1) \
         | tee /dev/fd/2 \
         | xargs -I{} \
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
+        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.THE_GH_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
         || cat logs.zip; exit 1 \
         && rm -rf /tmp/w-logs \
         && unzip logs.zip -d /tmp/w-logs \
