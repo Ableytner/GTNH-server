@@ -17,6 +17,8 @@ defaults:
 jobs:
   check:
     runs-on: [self-hosted, linux]
+    permissions:
+      actions: read
     outputs:
       gtnh_version: ${{ steps.fetch-version.outputs.vers }}
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
