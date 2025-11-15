@@ -41,8 +41,16 @@ function substitute_motd() {
 function create_backup() {
     cd /data
 
-    if [[ ! -d World ]]; then
-        log "not creating backup as World folder doesn't exist"
+    if [[ -d World ]]; then
+        local world_dir="World"
+    elif [[ -d world ]]; then
+        local world_dir="world"
+    else
+        local world_dir=""
+    fi
+
+    if [[ "${world_dir}" == "" ]]; then
+        log "not creating backup as world folder doesn't exist"
     else
         local backup_file="docker-backups/${1}.zip"
 
@@ -59,7 +67,7 @@ function create_backup() {
         mkdir -p docker-backups/new/config
         chown minecraft:minecraft docker-backups/new/config
 
-        cp -rp serverutilities visualprospecting World docker-backups/new/
+        cp -rp serverutilities visualprospecting ${world_dir} docker-backups/new/
         cp -rp config/JourneyMapServer docker-backups/new/config/
         cd docker-backups/new
         zip -rq "../../${backup_file}" .
@@ -91,14 +99,20 @@ function load_backup() {
     mkdir -p docker-backups/new
     chown minecraft:minecraft docker-backups/new
 
-    rm -rf serverutilities visualprospecting World config/JourneyMapServer
+    if [[ -d World ]]; then
+        local world_dir="World"
+    else
+        local world_dir="world"
+    fi
+
+    rm -rf serverutilities visualprospecting ${world_dir} config/JourneyMapServer
 
     unzip -q $backup_file -d docker-backups/new
     chown -R minecraft:minecraft docker-backups/new
     # fix question mark permissions
     # https://unix.stackexchange.com/a/393603
     chmod -R a+X docker-backups/new
-    mv docker-backups/new/serverutilities docker-backups/new/visualprospecting docker-backups/new/World .
+    mv docker-backups/new/serverutilities docker-backups/new/visualprospecting docker-backups/new/${world_dir} .
     mv docker-backups/new/config/JourneyMapServer ./config
 
     log "cleaning up"
