@@ -12,7 +12,6 @@ log "running GTNH-server with versions GTNH_VERSION: ${GTNH_VERSION}, GTNH_DAILY
 if [[ -f docker-backups/current.txt ]]; then
     INSTALLED_IMAGE_VERSION=$(<docker-backups/current.txt)
 fi
-echo $IMAGE_VERSION > docker-backups/current.txt
 
 # convert legacy backups
 if [[ -v INSTALLED_IMAGE_VERSION ]] && (( $INSTALLED_IMAGE_VERSION < 10000 )); then
@@ -44,7 +43,11 @@ fi
 
 # load or create backup
 if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION > IMAGE_VERSION )); then
-    load_backup "${IMAGE_VERSION}"
+    if [[ "${INSTALLED_IMAGE_VERSION}" != *"9999" ]] && [[ "${IMAGE_VERSION}" == *"9999" ]]; then
+        log "downgrading from daily to stable branch"
+    else
+        load_backup "${IMAGE_VERSION}"
+    fi
 else
     create_backup "${IMAGE_VERSION}"
 fi
@@ -58,6 +61,9 @@ fi
 
 # always add additional mods
 install_additional_mods ${WEBMAP}
+
+# set new version only after update succeeded
+echo $IMAGE_VERSION > docker-backups/current.txt
 
 # substitute MOTD
 if [[ -v MOTD ]]; then
