@@ -49,7 +49,7 @@ if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION > IMAGE_VERSIO
         load_backup "${IMAGE_VERSION}"
     fi
 else
-    create_backup "${IMAGE_VERSION}"
+    create_backup "${INSTALLED_IMAGE_VERSION}"
 fi
 
 # install server files if needed
