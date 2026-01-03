@@ -160,12 +160,6 @@ jobs:
     - name: install mcstatus
       run: |
         pipx install mcstatus==11.1.1
-    - name: Login to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
     - name: lowercase github.repository
       run: |
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}

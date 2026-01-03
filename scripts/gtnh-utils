@@ -71,6 +71,7 @@ function create_backup() {
         cp -rp config/JourneyMapServer docker-backups/new/config/
         cd docker-backups/new
         zip -rq "../../${backup_file}" .
+        chown minecraft:minecraft "../../${backup_file}"
         cd ../..
 
         log "cleaning up"
@@ -78,20 +79,67 @@ function create_backup() {
     fi
 }
 
+# some primitive tests (assuming files exist: 209000312.zip 209000310.zip 209000301.zip 209000296.zip old.zip)
+# $[[ "$(find_backup_file 209000320)" == "docker-backups/209000312.zip" ]] should be true
+# $[[ "$(find_backup_file 209000310)" == "docker-backups/209000310.zip" ]] should be true
+# $[[ "$(find_backup_file 209000309)" == "docker-backups/209000301.zip" ]] should be true
+# $[[ "$(find_backup_file 209000301)" == "docker-backups/209000301.zip" ]] should be true
+# $[[ "$(find_backup_file 209000300)" == "docker-backups/209000296.zip" ]] should be true
+# $[[ "$(find_backup_file 209000296)" == "docker-backups/209000296.zip" ]] should be true
+# $[[ "$(find_backup_file 209000295)" == "docker-backups/old.zip" ]] should be true
+function find_backup_file() {
+    cd /data
+
+    if [[ -f "docker-backups/${1}.zip" ]]; then
+        echo "docker-backups/${1}.zip"
+        return 0
+    fi
+
+    mapfile -d '' BACKUPS < <(find docker-backups -name "*.zip" -printf "%f\0")
+
+    # remove file extensions
+    for i in "${!BACKUPS[@]}"; do
+        BACKUPS[$i]=$(echo "${BACKUPS[$i]}" | cut -d "." -f1)
+    done
+
+    # sort in descending order
+    IFS=$'\n' BACKUPS=($(sort -r <<<"${BACKUPS[*]}"))
+    unset IFS
+
+    # remove old.zip if it exists
+    if [[ "${BACKUPS[0]}" == "old" ]]; then
+        BACKUPS=(${BACKUPS[@]:1})
+    fi
+
+    # remove all newer backups
+    while [[ ! ${#BACKUPS[@]} -eq 0 ]] && (( "${BACKUPS[0]}" > "${1}" )); do
+        BACKUPS=(${BACKUPS[@]:1})
+    done
+
+    # if it's not empty
+    if [[ ! ${#BACKUPS[@]} -eq 0 ]]; then
+        echo "docker-backups/${BACKUPS[0]}.zip"
+        unset BACKUPS
+        return 0
+    fi
+    unset BACKUPS
+
+    if [[ -f "docker-backups/old.zip" ]]; then
+        echo "docker-backups/old.zip"
+        return 0
+    fi
+
+    return 1
+}
+
 function load_backup() {
     cd /data
 
-    local backup_file="docker-backups/${1}.zip"
+    local backup_file=$(find_backup_file "${1}")
 
-    if [[ ! -f "${backup_file}" ]]; then
-        log "backup file ${backup_file} wasn't found"
-        if [[ -f "docker-backups/old.zip" ]]; then
-            log "falling back to backup file old.zip"
-            backup_file="docker-backups/old.zip"
-        else
-            log "ERR backup zip not found: ${backup_file}"
-            exit 1
-        fi
+    if [[ "$backup_file" == "" ]]; then
+        log "ERR backup zip not found: docker-backups/${1}.zip"
+        exit 1
     fi
 
     log "loading backup: ${backup_file}"
