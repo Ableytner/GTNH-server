@@ -71,6 +71,7 @@ function create_backup() {
         cp -rp config/JourneyMapServer docker-backups/new/config/
         cd docker-backups/new
         zip -rq "../../${backup_file}" .
+        chown minecraft:minecraft "../../${backup_file}"
         cd ../..
 
         log "cleaning up"
