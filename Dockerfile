@@ -1,10 +1,10 @@
-FROM itzg/minecraft-server:java21
+FROM itzg/minecraft-server:java25-graalvm
 
 ARG GTNH_VERSION \
   GTNH_DAILY_BUILD
 
-RUN apt-get update \
-  && apt-get install -y jq zip unzip \
+RUN dnf update -y \
+  && dnf install -y jq zip unzip \
   && mkdir -p /download \
   && mkdir -p /tmp
 
@@ -40,10 +40,13 @@ RUN --mount=type=secret,id=github_token \
 # set default environment variables for GTNH
 ENV GTNH_VERSION=${GTNH_VERSION} \
   GTNH_DAILY_BUILD=${GTNH_DAILY_BUILD} \
-  TYPE=custom \
+  TYPE="custom" \
   CUSTOM_SERVER="/data/lwjgl3ify-forgePatches.jar" \
   JVM_OPTS="@java9args.txt" \
-  JVM_XX_OPTS="-Dfml.queryResult=confirm -Dgt.recipebuilder.recipe_collision_check=true -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+UseNUMA -XX:NmethodSweepActivity=1 -XX:ReservedCodeCacheSize=400M -XX:NonNMethodCodeHeapSize=12M -XX:ProfiledCodeHeapSize=194M -XX:NonProfiledCodeHeapSize=194M -XX:-DontCompileHugeMethods -XX:MaxNodeLimit=240000 -XX:NodeLimitFudgeFactor=8000 -XX:+UseVectorCmov -XX:+PerfDisableSharedMem -XX:+UseFastUnorderedTimeStamps -XX:+UseCriticalJavaThreadPriority -XX:ThreadPriorityPolicy=1 -XX:AllocatePrefetchStyle=3  -XX:+UseG1GC -XX:MaxGCPauseMillis=37 -XX:+PerfDisableSharedMem -XX:G1HeapRegionSize=16M -XX:G1NewSizePercent=23 -XX:G1ReservePercent=20 -XX:SurvivorRatio=32 -XX:G1MixedGCCountTarget=3 -XX:G1HeapWastePercent=20 -XX:InitiatingHeapOccupancyPercent=10 -XX:G1RSetUpdatingPauseTimePercent=0 -XX:MaxTenuringThreshold=1 -XX:G1SATBBufferEnqueueingThresholdPercent=30 -XX:G1ConcMarkStepDurationMillis=5.0 -XX:GCTimeRatio=99"
+  JVM_XX_OPTS="-Dfml.queryResult=confirm -Dgt.recipebuilder.recipe_collision_check=true -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+AlwaysPreTouch -XX:+DisableExplicitGC -XX:+UseNUMA -XX:NmethodSweepActivity=1 -XX:ReservedCodeCacheSize=400M -XX:NonNMethodCodeHeapSize=12M -XX:ProfiledCodeHeapSize=194M -XX:NonProfiledCodeHeapSize=194M -XX:-DontCompileHugeMethods -XX:MaxNodeLimit=240000 -XX:NodeLimitFudgeFactor=8000 -XX:+UseVectorCmov -XX:+PerfDisableSharedMem -XX:+UseFastUnorderedTimeStamps -XX:+UseCriticalJavaThreadPriority -XX:ThreadPriorityPolicy=1 -XX:AllocatePrefetchStyle=3  -XX:+UseG1GC -XX:MaxGCPauseMillis=37 -XX:+PerfDisableSharedMem -XX:G1HeapRegionSize=16M -XX:G1NewSizePercent=23 -XX:G1ReservePercent=20 -XX:SurvivorRatio=32 -XX:G1MixedGCCountTarget=3 -XX:G1HeapWastePercent=20 -XX:InitiatingHeapOccupancyPercent=10 -XX:G1RSetUpdatingPauseTimePercent=0 -XX:MaxTenuringThreshold=1 -XX:G1SATBBufferEnqueueingThresholdPercent=30 -XX:G1ConcMarkStepDurationMillis=5.0 -XX:GCTimeRatio=99" \
+  MEMORY="8G" \
+  DUMP_SERVER_PROPERTIES="TRUE" \
+  CREATE_CONSOLE_IN_PIPE="TRUE"
 
 COPY --chmod=755 scripts/* /gtnh/scripts/
 
