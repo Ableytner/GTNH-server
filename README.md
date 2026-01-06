@@ -25,7 +25,6 @@ services:
       - ./server:/data
       - ./additional_mods:/mods
     environment:
-      MEMORY: 12G
       MOTD: "GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD"
       EULA: "TRUE"
       WEBMAP: "TRUE"
@@ -33,7 +32,8 @@ services:
 ```
 where ./server contains the minecraft server files (automatically downloaded) and ./additional_mods contains any additional mods (as .jar files).
 
-As this image is based on [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server), it supports all environment variables allowed there. All possible variables are listed [here](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server).
+Some environment variables are set to sane default that should always work with the modpack, but feel free to change them.
+As this image is based on [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server), it supports [all](https://docker-minecraft-server.readthedocs.io/en/latest/variables/#server) environment variables allowed there.
 
 'MODPACK_VERSION' and 'DAILY_BUILD' in the MOTD are placeholder variables that get substituted with the current GT New Horizons version and daily build version.
 
