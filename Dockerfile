@@ -1,4 +1,4 @@
-FROM itzg/minecraft-server:java25
+FROM itzg/minecraft-server:java25-graalvm
 
 ARG GTNH_VERSION \
   GTNH_DAILY_BUILD
