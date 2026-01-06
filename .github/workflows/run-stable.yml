@@ -148,7 +148,7 @@ jobs:
         | [[ $(cat -) == ${{ needs.check.outputs.gtnh_version }} ]]
     - name: Ensure that webmap is reachable
       run: |
-        curl -L --fail-with-body 127.0.0.1:8123 \
+        curl -L --fail-with-body --retry 3 --retry-delay 5 --retry-all-errors 127.0.0.1:8123 \
         || exit 1
     - name: Print out server container logs
       if: failure()
