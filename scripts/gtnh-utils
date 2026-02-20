@@ -49,7 +49,9 @@ function create_backup() {
         local world_dir=""
     fi
 
-    if [[ "${world_dir}" == "" ]]; then
+    if [[ "${1}" == "" ]]; then
+        log "not creating backup as backup name is empty"
+    elif [[ "${world_dir}" == "" ]]; then
         log "not creating backup as world folder doesn't exist"
     else
         local backup_file="docker-backups/${1}.zip"
@@ -211,7 +213,17 @@ function install_additional_mods() {
     if [[ -d /mods ]]; then
         log "copying additional mods"
 
-        cp -rp /mods/* mods/
+        for filename in /mods/*.jar; do
+            log "copying additional mod $filename"
+
+            filename_raw=$(basename $filename | cut -d "-" -f1)
+            if [[ $(find ./mods -maxdepth 1 -name "$filename_raw-*.jar" -printf 1 -quit) ]]; then
+                log "removing existing jar file"
+                find ./mods -maxdepth 1 -name "$filename_raw-*.jar" -exec rm {} ';'
+            fi
+
+            cp -rp $filename mods/
+        done
     fi
 
     if [[ $(find ./mods -maxdepth 1 -name 'gtnh-web-map-*.jar' -printf 1 -quit) ]]; then
