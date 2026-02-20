@@ -6,7 +6,7 @@ on:
       version:
         description: "the stable version to use (example input: 2.8.1)"
         type: string
-        required: true
+        required: false
 
 defaults:
   run:
@@ -21,16 +21,18 @@ jobs:
     - id: fetch-version
       name: get latest gtnh version
       run: |
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
+        [[ "${{ github.event.inputs.version }}" != "" ]] \
+        && echo "vers=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT" \
+        || curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
         | jq -r ".[] | .name" \
-        | grep -oP "^${{ github.event.inputs.version }}$" \
+        | grep -oP "^(\d+\.\d+\.\d+)$" \
         | head -n 1 \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
       run: |
         [[ "${{ steps.fetch-version.outputs.vers }}" == "" ]] \
-        && echo "modpack version number ${{ github.event.inputs.version }} wasn't found on github, exiting..." \
+        && echo "no latest stable modpack version found, exiting..." \
         && exit 1 \
         || echo "Found modpack version ${{ steps.fetch-version.outputs.vers }}"
 
