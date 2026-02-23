@@ -25,7 +25,7 @@ jobs:
     - name: check if latest daily build failed
       if: ${{ github.event.inputs.daily == '' }}
       run: |
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
+        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
         | jq -r ".workflow_runs[0] | .conclusion" \
         | [[ $(cat -) != "success" ]] \
         && echo "latest daily build didn't succeed, exiting..." \
@@ -34,7 +34,7 @@ jobs:
     - name: check if given daily build failed
       if: ${{ github.event.inputs.daily != '' }}
       run: |
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=100 \
+        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=100 \
         | jq -r ".workflow_runs[] | select(.run_number==${{ github.event.inputs.daily }}) | .conclusion" \
         | [[ $(cat -) != "success" ]] \
         && echo "given daily build didn't succeed, exiting..." \
@@ -43,7 +43,7 @@ jobs:
     - id: fetch-version
       name: get latest gtnh version
       run: |
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
+        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
         | jq -r ".[] | .name" \
         | grep -oP "^(\d+\.\d+\.\d+)" \
         | head -n 1 \
@@ -54,7 +54,7 @@ jobs:
       run: |
         [[ "${{ github.event.inputs.daily }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.daily }}" >> "$GITHUB_OUTPUT" \
-        || curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
+        || curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
         | jq -r ".workflow_runs[0] | .run_number" \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
@@ -67,10 +67,10 @@ jobs:
         if [[ "${{ github.event.inputs.daily }}" != "" ]]; then \
         echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; else \
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/Ableytner/GTNH-server/actions/workflows/run-daily.yml/runs?per_page=100 \
+        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/Ableytner/GTNH-server/actions/workflows/run-daily.yml/runs?per_page=100 \
         | jq -r "first(.workflow_runs[] | select(.conclusion==\"failure\")) | .logs_url" \
         | xargs -I{} \
-        curl --fail-with-body -L -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
+        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
         && rm -rf /tmp/w-logs \
         && unzip logs.zip -d /tmp/w-logs \
         && find /tmp/w-logs/ -regex ".*[0-9]+_check.txt" \
@@ -134,7 +134,7 @@ jobs:
         docker save -o /tmp/image.tar ${{ env.IMAGE_NAME }}:latest
     - name: Cache docker image
       run: |
-        curl --fail-with-body -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server-daily-${{ needs.check.outputs.daily_version }}" -F "issue_id=1" http://192.168.0.11:25000/dump
+        curl -f -X POST -F "file=@/tmp/image.tar" -F "project_id=gtnh-server-daily-${{ needs.check.outputs.daily_version }}" -F "issue_id=1" http://192.168.0.11:25000/dump
     - name: Remove local image
       run: |
         docker image rm ${{ env.IMAGE_NAME }}
@@ -149,7 +149,7 @@ jobs:
         python-version: "3.12"
     - name: Install tzdata
       run: |
-        sudo ln -snf /usr/share/zoneinfo/$(curl --fail-with-body \"https://ipapi.co/timezone\") /etc/localtime
+        sudo ln -snf /usr/share/zoneinfo/$(curl -f \"https://ipapi.co/timezone\") /etc/localtime
         sudo apt-get update
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
     - name: Set up pipx
@@ -165,7 +165,7 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Download cached docker image
       run: |
-        curl --fail-with-body -X GET http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar -o /tmp/image.tar
+        curl -f -X GET http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar -o /tmp/image.tar
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
@@ -211,7 +211,7 @@ jobs:
         | [[ $(cat -) == ${{ needs.check.outputs.daily_version }} ]]
     - name: Ensure that webmap is reachable
       run: |
-        curl -L --fail-with-body --retry 3 --retry-delay 5 --retry-all-errors 127.0.0.1:8123 \
+        curl -Lf --retry 3 --retry-delay 5 --retry-all-errors 127.0.0.1:8123 \
         || exit 1
     - name: Print out server container logs
       if: failure()
@@ -224,7 +224,7 @@ jobs:
     - name: Remove cached docker image on failure
       if: failure()
       run: |
-        curl --fail-with-body -X DELETE http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar
+        curl -f -X DELETE http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar
 
   push:
     needs: [check, test]
@@ -244,7 +244,7 @@ jobs:
         echo "IMAGE_NAME=`echo ${{github.repository}} | tr '[:upper:]' '[:lower:]'`" >>${GITHUB_ENV}
     - name: Download cached docker image
       run: |
-        curl --fail-with-body -X GET http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar -o /tmp/image.tar
+        curl -f -X GET http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar -o /tmp/image.tar
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
@@ -264,4 +264,4 @@ jobs:
     - name: Remove cached docker image
       if: always()
       run: |
-        curl --fail-with-body -X DELETE http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar
+        curl -f -X DELETE http://192.168.0.11:25000/attachments/gtnh-server-daily-${{ needs.check.outputs.daily_version }}/1/image.tar
