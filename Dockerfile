@@ -23,7 +23,7 @@ RUN --mount=type=secret,id=github_token \
   && rm server.zip \
   && mv *.zip server.zip \
   ; else \
-  curl -L https://downloads.gtnewhorizons.com/versions.json \
+  curl -Lf https://downloads.gtnewhorizons.com/versions.json \
   | jq -r ".versions.\"${GTNH_VERSION}\".server.java17_2XUrl" \
   | xargs -I {} \
   curl -Lf {} -o /download/server.zip \
