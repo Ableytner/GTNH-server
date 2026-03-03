@@ -47,7 +47,9 @@ ENV GTNH_VERSION=${GTNH_VERSION} \
   MEMORY="8G" \
   DUMP_SERVER_PROPERTIES="TRUE" \
   CREATE_CONSOLE_IN_PIPE="TRUE" \
-  ALLOW_FLIGHT="TRUE" # to allow for hang glider usage
+  LEVEL_TYPE="rwg" \
+  DIFFICULTY="hard" \
+  ALLOW_FLIGHT="TRUE"
 
 COPY --chmod=755 scripts/* /gtnh/scripts/
 
