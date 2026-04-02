@@ -87,7 +87,7 @@ jobs:
         python-version: "3.12"
     - name: Install tzdata
       run: |
-        sudo ln -snf /usr/share/zoneinfo/$(curl -f \"https://ipapi.co/timezone\") /etc/localtime
+        sudo ln -snf /usr/share/zoneinfo/$(curl -f https://ipapi.co/timezone) /etc/localtime
         sudo apt-get update
         DEBIAN_FRONTEND=noninteractive sudo apt-get -y install tzdata
     - name: Set up pipx
