@@ -17,7 +17,7 @@ RUN --mount=type=secret,id=github_token \
   curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "{}/artifacts" \
   | jq -r '.artifacts[] | select(.name | endswith("server-java17-25.zip")) | .archive_download_url' \
   | xargs -I{} \
-  curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" {} -o /download/server.zip
+  curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" {} -o /download/server.zip \
   ; else \
   curl -Lf https://downloads.gtnewhorizons.com/versions.json \
   | jq -r ".versions.\"${GTNH_VERSION}\".server.java17_2XUrl" \
