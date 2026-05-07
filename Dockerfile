@@ -15,7 +15,7 @@ RUN --mount=type=secret,id=github_token \
   | jq -r ".workflow_runs[] | select(.run_number==${GTNH_DAILY_BUILD}) | .url" \
   | xargs -I{} \
   curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" "{}/artifacts" \
-  | jq -r '.artifacts[] | select(.name | endswith("server-java17-25")) | .archive_download_url' \
+  | jq -r '.artifacts[] | select(.name | endswith("server-java17-25.zip")) | .archive_download_url' \
   | xargs -I{} \
   curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" {} -o /download/server.zip \
   && cd /download \
