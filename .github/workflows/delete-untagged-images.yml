@@ -12,6 +12,8 @@ defaults:
 jobs:
   delete-untagged:
     runs-on: self-hosted
+    permissions:
+      packages: write
     steps:
     - name: lowercase github.repository
       run: |
