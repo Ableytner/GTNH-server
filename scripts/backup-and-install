@@ -72,4 +72,4 @@ if [[ -v MOTD ]]; then
 fi
 
 # start the base images' entrypoint
-/start
+exec /start
