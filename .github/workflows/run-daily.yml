@@ -87,6 +87,7 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
+        echo "daily version build succeeded: ${{ steps.build-succeeded.outputs.build_succeeded }}"
         echo "should daily version be built: ${{ steps.should-build-daily.outputs.build_daily }}"
 
   build:
