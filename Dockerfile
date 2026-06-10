@@ -28,7 +28,7 @@ RUN --mount=type=secret,id=github_token \
 # download gtnh web map
 RUN --mount=type=secret,id=github_token \
   curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GTNH-Web-Map/releases/latest \
-  | jq -r '.assets[] | select(.name | test("gtnh-web-map-[\\d\\.]+\\.jar")) | .browser_download_url' \
+  | jq -r '.assets[] | select(.name | test("gtnh-web-map-[\\d\\.]+(?:\\-?beta\\-?\\d+)?\\.jar")) | .browser_download_url' \
   | xargs -I{} \
   curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $(cat /run/secrets/github_token)" -H "X-GitHub-Api-Version: 2022-11-28" {} --remote-name \
   && mv gtnh-web-map-*.jar /download/
