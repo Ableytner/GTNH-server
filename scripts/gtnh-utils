@@ -231,7 +231,8 @@ function install_additional_mods() {
         rm -f mods/gtnh-web-map-*.jar
     fi
 
-    if [[ ${1} != "" ]]; then
+    install_webmap=$(echo ${1} | tr '[:upper:]' '[:lower:]')
+    if [[ $install_webmap == "true" ]] || [[ $install_webmap == "yes" ]]; then
         log "installing gtnh web map"
         mv /download/gtnh-web-map-*.jar mods/
     fi
