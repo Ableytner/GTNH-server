@@ -23,8 +23,8 @@ jobs:
       run: |
         [[ "${{ github.event.inputs.version }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT" \
-        || curl -Lf https://downloads.gtnewhorizons.com/versions.json \
-        | jq -r ".versions | keys[]" \
+        || curl -Lf https://www.gtnewhorizons.com/versions.json \
+        | jq -r "keys[]" \
         | grep -oP "^(\d+\.\d+\.\d+)$" \
         | tail -n 1 \
         | xargs -I{} \
