@@ -26,18 +26,16 @@ jobs:
       name: check if latest daily build failed
       if: ${{ github.event.inputs.daily == '' }}
       run: |
-        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
-        | jq -r ".workflow_runs[0] | .conclusion" \
-        | [[ $(cat -) == "success" ]] \
+        curl -Lf https://api.ableytner.at/gtnh/daily/latest \
+        | jq -r ".success" \
+        | [[ $(cat -) == "true" ]] \
         && echo "build_succeeded=yes" >> "$GITHUB_OUTPUT" \
         || echo "build_succeeded=no" >> "$GITHUB_OUTPUT"
     - id: fetch-version
       name: get latest gtnh version
       run: |
-        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/GT-New-Horizons-Modpack/tags?per_page=100 \
-        | jq -r ".[] | .name" \
-        | grep -oP "^(\d+\.\d+\.\d+)" \
-        | head -n 1 \
+        curl -Lf https://api.ableytner.at/gtnh/stable/latest \
+        | jq -r ".version" \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
     - id: fetch-daily
@@ -45,8 +43,8 @@ jobs:
       run: |
         [[ "${{ github.event.inputs.daily }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.daily }}" >> "$GITHUB_OUTPUT" \
-        || curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/GTNewHorizons/DreamAssemblerXXL/actions/workflows/daily-modpack-build.yml/runs?per_page=1 \
-        | jq -r ".workflow_runs[0] | .run_number" \
+        || curl -Lf https://api.ableytner.at/gtnh/daily/latest \
+        | jq -r ".run_number" \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
     - name: lowercase github.repository
@@ -58,22 +56,10 @@ jobs:
         if [[ "${{ github.event.inputs.daily }}" != "" ]]; then \
         echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; else \
-        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/Ableytner/GTNH-server/actions/workflows/run-daily.yml/runs?per_page=100 \
-        | jq -r "first(.workflow_runs[] | select(.conclusion==\"failure\")) | .logs_url" \
-        | xargs -I{} \
-        curl -Lf -H "Accept: application/vnd.github+json" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" {} -o logs.zip \
-        && rm -rf /tmp/w-logs \
-        && unzip logs.zip -d /tmp/w-logs \
-        && find /tmp/w-logs/ -regex ".*[0-9]+_check.txt" \
-        | xargs -I {} cat "{}" \
-        | grep -oP "Found\ latest\ daily\ version\ (\d+)$" \
-        | tac -s' ' \
-        | head -1 \
-        | [[ "$(cat -)" == "${{ steps.fetch-daily.outputs.vers }}" ]] \
-        && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
-        || [[ "${{ steps.build-succeeded.outputs.build_succeeded }}" == "no" ]] \
-        && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
-        || docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
+        curl -Lf https://api.ableytner.at/gtnh/daily/latest \
+        | jq -r ".success" \
+        | [[ $(cat -) == "true" ]] \
+        && docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
         && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
         || echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; fi
