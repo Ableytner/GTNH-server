@@ -9,23 +9,25 @@ RUN dnf update -y \
   && mkdir -p /tmp
 
 # download server zip
-RUN if [ "$GTNH_DAILY_BUILD" != "" ]; then \
+RUN --mount=type=secret,id=github_token \
+  if [ "$GTNH_DAILY_BUILD" != "" ]; then \
   curl -Lf https://api.ableytner.at/gtnh/daily/${GTNH_DAILY_BUILD} \
   | jq -r ".downloads.server" \
   | xargs -I{} \
-  curl -Lf {} -o /download/server.zip \
+  curl -Lf -H "Authorization: Bearer $(cat /run/secrets/github_token)" {} -o /download/server.zip \
   ; else \
   curl -Lf https://api.ableytner.at/gtnh/stable/${GTNH_VERSION} \
   | jq -r ".downloads.server" \
   | xargs -I{} \
-  curl -Lf {} -o /download/server.zip \
+  curl -Lf -H "Authorization: Bearer $(cat /run/secrets/github_token)" {} -o /download/server.zip \
   ; fi
 
 # download gtnh web map
-RUN curl -Lf https://api.ableytner.at/gtnh/webmap/latest \
+RUN --mount=type=secret,id=github_token \
+  curl -Lf https://api.ableytner.at/gtnh/webmap/latest \
   | jq -r ".download_url" \
   | xargs -I{} \
-  curl -Lf {} --remote-name \
+  curl -Lf -H "Authorization: Bearer $(cat /run/secrets/github_token)" {} --remote-name \
   && mv gtnh-web-map-*.jar /download/
 
 # set default environment variables for GTNH
