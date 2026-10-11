@@ -23,10 +23,8 @@ jobs:
       run: |
         [[ "${{ github.event.inputs.version }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.version }}" >> "$GITHUB_OUTPUT" \
-        || curl -Lf https://www.gtnewhorizons.com/versions.json \
-        | jq -r "keys[]" \
-        | grep -oP "^(\d+\.\d+\.\d+)$" \
-        | tail -n 1 \
+        || curl -Lf https://api.ableytner.at/gtnh/stable/latest \
+        | jq -r ".version" \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
     - name: print modpack version number
