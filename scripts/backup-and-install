@@ -11,6 +11,9 @@ log "running GTNH-server with versions GTNH_VERSION: ${GTNH_VERSION}, GTNH_DAILY
 
 if [[ -f docker-backups/current.txt ]]; then
     INSTALLED_IMAGE_VERSION=$(<docker-backups/current.txt)
+else
+    # this is the first time this server is started (with my docker image)
+    IS_FIRST_RUN="true"
 fi
 
 # convert legacy backups
@@ -57,6 +60,12 @@ if [[ -v INSTALLED_IMAGE_VERSION ]] && (( INSTALLED_IMAGE_VERSION == IMAGE_VERSI
     log "skipping install step for already installed version"
 else
     install_server
+fi
+
+# set default configs
+if [[ -v IS_FIRST_RUN ]]; then
+    log "making first-time config changes"
+    setup_initial_configs
 fi
 
 # always add additional mods

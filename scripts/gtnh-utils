@@ -237,3 +237,16 @@ function install_additional_mods() {
         mv /download/gtnh-web-map-*.jar mods/
     fi
 }
+
+function setup_initial_configs() {
+    cd /data
+
+    # enable /home and /sethome commands
+    sed -i -e 's/B:home=false/B:home=true/g' serverutilities/serverutilities.cfg
+    sed -i -e 's/B:chunk_claiming=false/B:chunk_claiming=true/g' serverutilities/serverutilities.cfg
+    sed -i -e 's/B:chunk_loading=false/B:chunk_loading=true/g' serverutilities/serverutilities.cfg
+
+    # set default max claimed / loaded chunks
+    sed -i -e 's/serverutilities.claims.max_chunks: .*/serverutilities.claims.max_chunks: 100000/' serverutilities/server/ranks.txt
+    sed -i -e 's/serverutilities.chunkloader.max_chunks: .*/serverutilities.chunkloader.max_chunks: 100000/' serverutilities/server/ranks.txt
+}
