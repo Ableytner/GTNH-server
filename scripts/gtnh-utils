@@ -209,6 +209,8 @@ function install_server() {
 
 function install_additional_mods() {
     cd /data
+    # always create mods directory if it doesn't exist
+    mkdir -p mods
 
     if [[ -d /mods ]]; then
         log "copying additional mods"
