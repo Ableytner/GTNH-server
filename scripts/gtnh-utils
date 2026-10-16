@@ -212,7 +212,7 @@ function install_additional_mods() {
     # always create mods directory if it doesn't exist
     mkdir -p mods
 
-    if [[ -d /mods ]]; then
+    if [[ -d /mods]] && [[ stat -t /mods/*.jar >/dev/null 2>&1 ]]; then
         log "copying additional mods"
 
         for filename in /mods/*.jar; do
