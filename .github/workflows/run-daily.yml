@@ -55,6 +55,8 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.daily }}" != "" ]]; then \
         echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
+        ; elif [[ "${{ steps.build-succeeded.outputs.build_succeeded }}" == "no" ]]; then \
+        echo "build_daily=no" >> "$GITHUB_OUTPUT" \
         ; else \
         curl -Lf https://api.ableytner.at/gtnh/daily/latest \
         | jq -r ".success" \
