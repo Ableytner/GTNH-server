@@ -22,15 +22,6 @@ jobs:
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
       should_build_daily: ${{ steps.should-build-daily.outputs.build_daily }}
     steps:
-    - id: build-succeeded
-      name: check if latest daily build failed
-      if: ${{ github.event.inputs.daily == '' }}
-      run: |
-        curl -Lf https://api.ableytner.at/gtnh/daily/latest \
-        | jq -r ".success" \
-        | [[ $(cat -) == "true" ]] \
-        && echo "build_succeeded=yes" >> "$GITHUB_OUTPUT" \
-        || echo "build_succeeded=no" >> "$GITHUB_OUTPUT"
     - id: fetch-version
       name: get latest gtnh version
       run: |
@@ -39,11 +30,11 @@ jobs:
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
     - id: fetch-daily
-      name: get latest daily version number
+      name: get latest successful daily version number
       run: |
         [[ "${{ github.event.inputs.daily }}" != "" ]] \
         && echo "vers=${{ github.event.inputs.daily }}" >> "$GITHUB_OUTPUT" \
-        || curl -Lf https://api.ableytner.at/gtnh/daily/latest \
+        || curl -Lf https://api.ableytner.at/gtnh/daily/latest?success=true \
         | jq -r ".run_number" \
         | xargs -I{} \
         echo "vers={}" >> "$GITHUB_OUTPUT"
@@ -55,13 +46,8 @@ jobs:
       run: |
         if [[ "${{ github.event.inputs.daily }}" != "" ]]; then \
         echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
-        ; elif [[ "${{ steps.build-succeeded.outputs.build_succeeded }}" == "no" ]]; then \
-        echo "build_daily=no" >> "$GITHUB_OUTPUT" \
         ; else \
-        curl -Lf https://api.ableytner.at/gtnh/daily/latest \
-        | jq -r ".success" \
-        | [[ $(cat -) == "true" ]] \
-        && docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
+        docker manifest inspect "ghcr.io/${{ env.IMAGE_NAME }}:daily-${{ steps.fetch-daily.outputs.vers }}" > /dev/null 2>&1 \
         && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
         || echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; fi
@@ -75,7 +61,6 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
-        echo "daily version build succeeded: ${{ steps.build-succeeded.outputs.build_succeeded }}"
         echo "should daily version be built: ${{ steps.should-build-daily.outputs.build_daily }}"
 
   build:
