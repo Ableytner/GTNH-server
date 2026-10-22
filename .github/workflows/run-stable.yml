@@ -109,7 +109,7 @@ jobs:
     - name: Check version labels
       run: |
         PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
-        GTNH_VERSION=$(echo "$PROPS" | grep '^gtnh-version=' | cut -d= -f2)
+        GTNH_VERSION=$(echo "$PROPS" | sed -n 's/^gtnh-version=//p')
         echo "image.properties: gtnh-version=${GTNH_VERSION}"
 
         [[ "$GTNH_VERSION" == "${{ needs.check.outputs.gtnh_version }}" ]] || { echo "gtnh-version mismatch: ${GTNH_VERSION} != ${{ needs.check.outputs.gtnh_version }}"; exit 1; }

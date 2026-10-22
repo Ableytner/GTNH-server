@@ -148,12 +148,13 @@ jobs:
     - name: Check backup-id and version labels
       run: |
         PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
-        NEW_BACKUP_ID=$(echo "$PROPS" | grep '^backup-id=' | cut -d= -f2)
-        NEW_GTNH_VERSION=$(echo "$PROPS" | grep '^gtnh-version=' | cut -d= -f2)
-        NEW_DAILY=$(echo "$PROPS" | grep '^daily=' | cut -d= -f2)
+        NEW_BACKUP_ID=$(echo "$PROPS" | sed -n 's/^backup-id=//p')
+        NEW_GTNH_VERSION=$(echo "$PROPS" | sed -n 's/^gtnh-version=//p')
+        NEW_DAILY=$(echo "$PROPS" | sed -n 's/^daily=//p')
         echo "image.properties: gtnh-version=${NEW_GTNH_VERSION} daily=${NEW_DAILY} backup-id=${NEW_BACKUP_ID}"
 
         # label assertions
+        [[ -n "$NEW_BACKUP_ID" ]] || { echo "new image has no backup-id"; exit 1; }
         [[ "$NEW_GTNH_VERSION" == "${{ needs.check.outputs.gtnh_version }}" ]] || { echo "gtnh-version mismatch: ${NEW_GTNH_VERSION} != ${{ needs.check.outputs.gtnh_version }}"; exit 1; }
         [[ "$NEW_DAILY" == "${{ needs.check.outputs.daily_version }}" ]] || { echo "daily mismatch: ${NEW_DAILY} != ${{ needs.check.outputs.daily_version }}"; exit 1; }
 
@@ -165,7 +166,7 @@ jobs:
         fi
         docker pull ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN}
         PREV_PROPS=$(docker run --rm ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN} cat /etc/image.properties)
-        PREV_BACKUP_ID=$(echo "$PREV_PROPS" | grep '^backup-id=' | cut -d= -f2)
+        PREV_BACKUP_ID=$(echo "$PREV_PROPS" | sed -n 's/^backup-id=//p')
         if [[ -z "$PREV_BACKUP_ID" ]]; then
           echo "previous image daily-${PREV_RUN} has no backup-id (legacy); skipping"
           exit 0
