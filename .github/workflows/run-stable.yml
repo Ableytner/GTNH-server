@@ -106,6 +106,13 @@ jobs:
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
+    - name: Check version labels
+      run: |
+        PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
+        GTNH_VERSION=$(echo "$PROPS" | grep '^gtnh-version=' | cut -d= -f2)
+        echo "image.properties: gtnh-version=${GTNH_VERSION}"
+
+        [[ "$GTNH_VERSION" == "${{ needs.check.outputs.gtnh_version }}" ]] || { echo "gtnh-version mismatch: ${GTNH_VERSION} != ${{ needs.check.outputs.gtnh_version }}"; exit 1; }
     - name: Create server container
       run: |
         docker create --name minecraft-gtnh3 -p 25565:25565 -p 8123:8123 -e MOTD='GT New Horizons MODPACK_VERSION-stable' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \

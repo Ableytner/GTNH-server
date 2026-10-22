@@ -21,6 +21,7 @@ jobs:
       gtnh_version: ${{ steps.fetch-version.outputs.vers }}
       daily_version: ${{ steps.fetch-daily.outputs.vers }}
       should_build_daily: ${{ steps.should-build-daily.outputs.build_daily }}
+      prev_daily: ${{ steps.find-prev-daily.outputs.prev }}
     steps:
     - id: fetch-version
       name: get latest gtnh version
@@ -51,6 +52,18 @@ jobs:
         && echo "build_daily=no" >> "$GITHUB_OUTPUT" \
         || echo "build_daily=yes" >> "$GITHUB_OUTPUT" \
         ; fi
+    - id: find-prev-daily
+      name: find previous existing daily image in ghcr
+      run: |
+        n=${{ steps.fetch-daily.outputs.vers }}
+        prev=""
+        for (( i=n-1; i>=1 && i>=n-50; i-- )); do
+          if docker manifest inspect "ghcr.io/${IMAGE_NAME}:daily-${i}" > /dev/null 2>&1; then
+            prev=${i}
+            break
+          fi
+        done
+        echo "prev=${prev}" >> "$GITHUB_OUTPUT"
     - name: print check summary
       run: |
         [[ ${{ steps.fetch-version.outputs.vers }} == "" ]] \
@@ -61,6 +74,7 @@ jobs:
         && echo "daily version number is empty, exiting..." \
         && exit 1 \
         || echo "Found latest daily version ${{ steps.fetch-daily.outputs.vers }}"
+        echo "previous existing daily image: ${{ steps.find-prev-daily.outputs.prev }}"
         echo "should daily version be built: ${{ steps.should-build-daily.outputs.build_daily }}"
 
   build:
@@ -131,6 +145,37 @@ jobs:
     - name: Load image
       run: |
         docker load --input /tmp/image.tar
+    - name: Check backup-id and version labels
+      run: |
+        PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
+        NEW_BACKUP_ID=$(echo "$PROPS" | grep '^backup-id=' | cut -d= -f2)
+        NEW_GTNH_VERSION=$(echo "$PROPS" | grep '^gtnh-version=' | cut -d= -f2)
+        NEW_DAILY=$(echo "$PROPS" | grep '^daily=' | cut -d= -f2)
+        echo "image.properties: gtnh-version=${NEW_GTNH_VERSION} daily=${NEW_DAILY} backup-id=${NEW_BACKUP_ID}"
+
+        # label assertions
+        [[ "$NEW_GTNH_VERSION" == "${{ needs.check.outputs.gtnh_version }}" ]] || { echo "gtnh-version mismatch: ${NEW_GTNH_VERSION} != ${{ needs.check.outputs.gtnh_version }}"; exit 1; }
+        [[ "$NEW_DAILY" == "${{ needs.check.outputs.daily_version }}" ]] || { echo "daily mismatch: ${NEW_DAILY} != ${{ needs.check.outputs.daily_version }}"; exit 1; }
+
+        # monotonicity vs previous existing image
+        PREV_RUN="${{ needs.check.outputs.prev_daily }}"
+        if [[ -z "$PREV_RUN" ]]; then
+          echo "no previous daily image found; skipping backup-id check"
+          exit 0
+        fi
+        docker pull ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN}
+        PREV_PROPS=$(docker run --rm ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN} cat /etc/image.properties)
+        PREV_BACKUP_ID=$(echo "$PREV_PROPS" | grep '^backup-id=' | cut -d= -f2)
+        if [[ -z "$PREV_BACKUP_ID" ]]; then
+          echo "previous image daily-${PREV_RUN} has no backup-id (legacy); skipping"
+          exit 0
+        fi
+        if (( NEW_BACKUP_ID > PREV_BACKUP_ID )); then
+          echo "backup-id monotonic: ${NEW_BACKUP_ID} > ${PREV_BACKUP_ID} (daily-${PREV_RUN})"
+        else
+          echo "backup-id REGRESSION: ${NEW_BACKUP_ID} <= ${PREV_BACKUP_ID} (daily-${PREV_RUN})"
+          exit 1
+        fi
     - name: Create server container
       run: |
         docker create --name minecraft-gtnh3 -p 25565:25565 -p 8123:8123 -e MOTD='GT New Horizons MODPACK_VERSION-dailyDAILY_BUILD' -e EULA=TRUE -e WEBMAP=TRUE ${{ env.IMAGE_NAME }}:latest \
