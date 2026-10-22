@@ -8,10 +8,13 @@
 # $(( $(version_to_int "2.8.1" "55") > $(version_to_int "2.8" ) )) should be true
 # $(( $(version_to_int "2.8.1" ) > $(version_to_int "2.8" ) )) should be true
 # $(( $(version_to_int "2.9" ) > $(version_to_int "2.8.99" ) )) should be true
+# $(( $(version_to_int "2.9.1-rc1" ) > $(version_to_int "2.9.1" ) )) should be false (rc is treated as the release)
+# $(( $(version_to_int "2.9.1-beta1" ) > $(version_to_int "2.9.1" ) )) should be false
 function version_to_int() {
-    local major=$(echo "$1" | cut -d '.' -f1) # up to 99
-    local minor=$(echo "$1" | cut -d '.' -f2) # up to 99
-    local patch=$(echo "$1" | cut -d '.' -f3) # up to 99
+    local version="${1%%[!0-9.]*}" # cut at the first character that is neither a digit nor a dot (e.g. 2.9.1-rc1 -> 2.9.1)
+    local major=$(echo "$version" | cut -d '.' -f1) # up to 99
+    local minor=$(echo "$version" | cut -d '.' -f2) # up to 99
+    local patch=$(echo "$version" | cut -d '.' -f3) # up to 99
     local daily="$2" # up to 9999
 
     major="$(( ${major:-00} * 100000000 ))"
