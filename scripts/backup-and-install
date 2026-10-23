@@ -1,6 +1,6 @@
 #!/bin/bash
 
-. /gtnh/scripts/gtnh-utils
+source /gtnh/scripts/gtnh-utils
 
 cd /data
 mkdir -p docker-backups && chown -R minecraft:minecraft docker-backups
