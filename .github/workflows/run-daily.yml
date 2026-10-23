@@ -147,7 +147,7 @@ jobs:
         docker load --input /tmp/image.tar
     - name: Check backup-id and version labels
       run: |
-        PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
+        PROPS=$(docker run --rm --entrypoint cat ${{ env.IMAGE_NAME }}:latest /etc/image.properties)
         NEW_BACKUP_ID=$(echo "$PROPS" | sed -n 's/^backup-id=//p')
         NEW_GTNH_VERSION=$(echo "$PROPS" | sed -n 's/^gtnh-version=//p')
         NEW_DAILY=$(echo "$PROPS" | sed -n 's/^daily=//p')
@@ -165,7 +165,7 @@ jobs:
           exit 0
         fi
         docker pull ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN}
-        PREV_PROPS=$(docker run --rm ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN} cat /etc/image.properties)
+        PREV_PROPS=$(docker run --rm --entrypoint cat ghcr.io/${IMAGE_NAME}:daily-${PREV_RUN} /etc/image.properties)
         PREV_BACKUP_ID=$(echo "$PREV_PROPS" | sed -n 's/^backup-id=//p')
         if [[ -z "$PREV_BACKUP_ID" ]]; then
           echo "previous image daily-${PREV_RUN} has no backup-id (legacy); skipping"

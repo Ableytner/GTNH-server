@@ -108,7 +108,7 @@ jobs:
         docker load --input /tmp/image.tar
     - name: Check version labels
       run: |
-        PROPS=$(docker run --rm ${{ env.IMAGE_NAME }}:latest cat /etc/image.properties)
+        PROPS=$(docker run --rm --entrypoint cat ${{ env.IMAGE_NAME }}:latest /etc/image.properties)
         GTNH_VERSION=$(echo "$PROPS" | sed -n 's/^gtnh-version=//p')
         echo "image.properties: gtnh-version=${GTNH_VERSION}"
 
